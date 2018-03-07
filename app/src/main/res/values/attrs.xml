@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="CenterScaleIndicator">
+        <attr name="indicator_line_color" format="color" />
+        <attr name="indicator_tab_bottom_padding" format="dimension" />
+        <attr name="indicator_divider_width" format="dimension" />
+        <attr name="indicator_line_height" format="dimension" />
+        <attr name="indicator_line_width" format="dimension" />
+        <attr name="indicator_text_size" format="dimension" />
+        <attr name="indicator_text_selected_color" format="color" />
+        <attr name="indicator_text_unselected_color" format="color" />
+        <attr name="indicator_base_scale" format="float" />
+        <attr name="indicator_scale_enabled" format="boolean" />
+        <attr name="indicator_line_style" format="enum">
+            <enum name="matchTabWidth" value="0" />
+            <enum name="userDefined" value="1" />
+        </attr>
+    </declare-styleable>
+
+</resources>
