@@ -7,11 +7,10 @@ import android.support.design.widget.CoordinatorLayout;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.view.ViewPager;
 import android.util.AttributeSet;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Scroller;
 
-import com.wytings.special.util.G;
+import com.wytings.special.util.ViewUtils;
 
 /**
  * Created by Rex on 2018/03/07.
@@ -29,12 +28,14 @@ public class ViewPagerBehavior extends AbsHeaderInfoBehavior<ViewPager> {
         public void run() {
             if (scroller.computeScrollOffset()) {
                 isDragging = false;
-                // RDLog.d("computeScrollOffset, currentY = %s", scroller.getCurrY());
                 setViewParamsHeight(dependentView, scroller.getCurrY());
                 mainHandler.post(this);
+            } else {
+                statusBehavior.isAutoScrolling = false;
             }
         }
     };
+    private final StatusBehavior statusBehavior = new StatusBehavior();
 
     public ViewPagerBehavior(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -45,33 +46,19 @@ public class ViewPagerBehavior extends AbsHeaderInfoBehavior<ViewPager> {
     @Override
     public boolean onDependentViewChanged(CoordinatorLayout parent, ViewPager child, View dependency) {
         final int dependencyHeight = getDependencyHeight();
-        // RDLog.d("onDependentViewChanged, dependency.getHeight=%s,params.height=%s", dependency.getHeight(), dependencyHeight);
 
         child.setTranslationY(dependencyHeight);
 
-        if (dependencyHeight == getDependentViewCollapsedHeight() || dependencyHeight == dp(220)) {
+        if (dependencyHeight == dependencyCollapseHeight || dependencyHeight == dependencyInitHeight) {
             CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams) child.getLayoutParams();
-            params.height = parent.getHeight() - getDependentViewCollapsedHeight();
+            params.height = parent.getHeight() - dependencyCollapseHeight;
             child.setLayoutParams(params);
+            if (parent.getTag() == null) {
+                parent.setTag(statusBehavior);
+            }
         }
 
         return true;
-    }
-
-    @Override
-    public boolean onInterceptTouchEvent(CoordinatorLayout parent, ViewPager child, MotionEvent ev) {
-        int dependencyHeight = getDependencyHeight();
-        G.d("onInterceptTouchEvent dependencyHeight = %s, isDragging = %s", dependencyHeight, isDragging);
-        if (dp(450) < dependencyHeight) {
-            return true;
-        } else if (ev.getHistorySize() > 1) {
-            if (ev.getY() < ev.getHistoricalY(1)) { // to top
-                if (getDependentViewCollapsedHeight() < dependencyHeight && dependencyHeight < dp(164)) {
-                    return onUserStopDragging(2000);
-                }
-            }
-        }
-        return super.onInterceptTouchEvent(parent, child, ev);
     }
 
     @Override
@@ -79,7 +66,6 @@ public class ViewPagerBehavior extends AbsHeaderInfoBehavior<ViewPager> {
         if (type != ViewCompat.TYPE_TOUCH) {
             return false;
         }
-        G.d("----------onNestedStartScroll, nestedScrollAxes=%s,type = %s", nestedScrollAxes, type);
         return (nestedScrollAxes & ViewCompat.SCROLL_AXIS_VERTICAL) != 0;
     }
 
@@ -99,7 +85,6 @@ public class ViewPagerBehavior extends AbsHeaderInfoBehavior<ViewPager> {
             return;
         }
 
-        G.d("----------onNestedPreScroll,getHeight = %s,dy=%s,isDragging=%s", getDependencyHeight(), dy, isDragging);
         if (dy <= 0) {
             return;
         }
@@ -116,7 +101,7 @@ public class ViewPagerBehavior extends AbsHeaderInfoBehavior<ViewPager> {
 
         } else if (dy > 0) {
             // dy>0 up
-            int miniHeight = getDependentViewCollapsedHeight();
+            int miniHeight = dependencyCollapseHeight;
             if (newHeight >= miniHeight) {
                 setViewParamsHeight(dependentView, newHeight);
                 consumed[1] = dy;
@@ -136,26 +121,23 @@ public class ViewPagerBehavior extends AbsHeaderInfoBehavior<ViewPager> {
             return;
         }
         // dy>0 to up, dy<0 to down
-        G.d("----------onNestedScroll, dyConsumed = %s, dyUnconsumed = %s,getHeight=%s", dyConsumed, dyUnconsumed, getDependencyHeight());
-        if (dyUnconsumed > 0) {
-            return;
-        }
-
-        if (dp(450) < getDependencyHeight()) {
-            target.onTouchEvent(MotionEvent.obtain(System.currentTimeMillis(), System.currentTimeMillis(), MotionEvent.ACTION_UP, 0, 0, 0));
-        }
-
         isDragging = dyUnconsumed < 0;
-        G.d("----------onNestedScroll, isDragging=%s, dyUnconsumed = %s, getHeight=%s", isDragging, dyUnconsumed, getDependencyHeight());
 
-        final int newHeight = getDependencyHeight() - dyUnconsumed;
-        setViewParamsHeight(dependentView, newHeight);
+        if (dyUnconsumed > 0) {
+            int newHeight = (int) (getDependencyHeight() - dyUnconsumed * 0.7f);
+            if (newHeight < dependencyCollapseHeight) {
+                newHeight = dependencyCollapseHeight;
+            }
+            setViewParamsHeight(dependentView, newHeight);
+        } else {
+            final int newHeight = (int) (getDependencyHeight() - dyUnconsumed * 0.7f);
+            setViewParamsHeight(dependentView, newHeight);
+        }
     }
 
     @Override
     public boolean onNestedPreFling(@NonNull CoordinatorLayout coordinatorLayout, @NonNull ViewPager child, @NonNull View target, float velocityX, float velocityY) {
-        G.d("----------onNestedPreFling, velocityX = %s, velocityY = %s", velocityX, velocityY);
-        return onUserStopDragging(velocityY);
+        return onAutoScrolling(Math.abs(velocityY) > 5000 ? 5000 : velocityY);
     }
 
     @Override
@@ -164,36 +146,34 @@ public class ViewPagerBehavior extends AbsHeaderInfoBehavior<ViewPager> {
             return;
         }
         isDragging = false;
-        G.d("----------onNestedStopScroll, target = %s, type = %s,isDragging = %s", target, type, isDragging);
 
         if (scroller.isFinished() && isAutoScrollEnabled) {
-            onUserStopDragging(1000);
+            onAutoScrolling(1000);
         }
     }
 
-    private boolean onUserStopDragging(float velocity) {// velocity>0 means dragging down, otherwise dragging up.
-        float currentHeight = dependentView.getHeight();
-        float miniHeight = getDependentViewCollapsedHeight();
-        if (currentHeight == miniHeight || currentHeight == dp(220)) {
+    private boolean onAutoScrolling(float velocity) {// velocity>0 means dragging down, otherwise dragging up.
+        float currentHeight = ViewUtils.getViewLayoutParamsHeight(dependentView);
+        if (currentHeight == dependencyCollapseHeight || currentHeight == dependencyInitHeight) {
             return false;
         }
 
-        final boolean willCollapse; // Flag indicates whether to expand the content.
+        final boolean willCollapse;
         if (Math.abs(velocity) <= 800) {
-            velocity = 800; // Limit velocity's minimum value.
+            velocity = 800;
         }
 
-        if (currentHeight < dp(164)) { // 164(*3=492) is in the middle of [108,220]. gap=56
+        if (currentHeight < (dependencyInitHeight + dependencyCollapseHeight) / 2) {
             willCollapse = true;
         } else {
             willCollapse = false;
         }
 
-        float targetHeight = willCollapse ? miniHeight : dp(220);
+        float targetHeight = willCollapse ? dependencyCollapseHeight : dependencyInitHeight;
 
         scroller.startScroll(0, (int) currentHeight, 0, (int) (targetHeight - currentHeight), (int) (1000000 / Math.abs(velocity)));
         mainHandler.post(flingRunnable);
-        G.d("onUserStopDragging,velocity = %s,currentHeight=%s,isDragging = %s", velocity, currentHeight, isDragging);
+        statusBehavior.isAutoScrolling = true;
         return true;
     }
 

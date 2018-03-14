@@ -25,19 +25,21 @@ public class IndicatorBehavior extends AbsHeaderInfoBehavior<View> {
     private final int unselectedWhite50;
     private final int unselectedWhite70;
     private float initBaseScale;
+    private final int indicatorHeight;
 
     public IndicatorBehavior(Context context, AttributeSet attrs) {
         super(context, attrs);
         selectedBlue = ContextCompat.getColor(context, R.color.blue_light);
         unselectedWhite50 = ContextCompat.getColor(context, R.color.white_color_50);
         unselectedWhite70 = ContextCompat.getColor(context, R.color.white_color_70);
+        indicatorHeight = dp(40);
     }
 
     @Override
     public boolean onDependentViewChanged(CoordinatorLayout parent, View child, View dependency) {
 
         final int dependencyHeight = getDependencyHeight();
-        child.setTranslationY(dependencyHeight - dp(40));
+        child.setTranslationY(dependencyHeight - indicatorHeight);
 
         if (maskView == null) {
             maskView = dependency.findViewById(R.id.mask);
@@ -45,11 +47,10 @@ public class IndicatorBehavior extends AbsHeaderInfoBehavior<View> {
             initBaseScale = indicator.getBaseScale();
         }
 
-        final float progress = getDependencyHeightProgress();
-        G.d("indicator progress = %s, dependencyHeight = %s", progress, dependencyHeight);
+        float progress = getDependencyHeightProgress();
 
         if (progress < 0) {
-            return false;
+            progress = 0;
         }
         changeIndicator(progress);
         changeBackgroundColor(maskView, progress, lightColor, darkColor);

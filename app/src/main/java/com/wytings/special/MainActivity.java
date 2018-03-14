@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
+import android.support.annotation.AnimRes;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.IdRes;
 import android.support.annotation.NonNull;
@@ -17,6 +18,7 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.ViewAnimator;
@@ -24,6 +26,8 @@ import android.widget.ViewAnimator;
 import com.wytings.special.behavior.IndicatorBehavior;
 import com.wytings.special.behavior.TitleBarBehavior;
 import com.wytings.special.behavior.ViewPagerBehavior;
+import com.wytings.special.util.Broadcaster;
+import com.wytings.special.util.Event;
 import com.wytings.special.util.G;
 import com.wytings.special.util.ViewUtils;
 import com.wytings.special.widget.CenterScaleIndicator;
@@ -44,19 +48,39 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
+    private Runnable loadingRunnable;
+    private ViewPager viewPager;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ViewUtils.transparentStatusBar(this);
+        viewPager = findViewById(R.id.view_pager);
+        loadingRunnable = () -> {
+            final int currentPosition = viewPager.getCurrentItem();
+            if (viewPager.getAdapter() == null) {
+                G.e("ViewPager doesn't have Adapter");
+                return;
+            }
+
+            G.d("start to loading top in position = %s", currentPosition);
+            if (0 <= currentPosition && currentPosition <= viewPager.getAdapter().getCount()) {
+                viewPager.postDelayed(() -> Broadcaster.getInstance().notifyEvent(Event.ACTION_INFO_STOP_LOADING), 2000);
+            } else {
+                G.w("current position = %s is invalid", currentPosition);
+            }
+        };
+        Broadcaster.getInstance().listenEvent(Event.ACTION_INFO_START_LOADING, loadingRunnable);
+
         initCategoryHeader();
         initPagerAnimator();
+
     }
 
     @SuppressLint("ClickableViewAccessibility")
     private void initPagerAnimator() {
         final View headerImageAnimator = findViewById(R.id.image_view_animator);
-        final ViewPager viewPager = findViewById(R.id.view_pager);
         viewPager.setAdapter(new ViewPagerAdapter(createRecyclerViewList()));
 
         final GestureDetector gestureDetector = new GestureDetector(getApplicationContext(), new GestureDetector.SimpleOnGestureListener() {
@@ -68,6 +92,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
                 G.d("onFling, e1.x=%s, e2.x=%s, velocityX = %s, velocityY = %s", e1.getX(), e2.getX(), velocityX, velocityY);
+                if (viewPager.getAdapter() == null) {
+                    return super.onFling(e1, e2, velocityX, velocityY);
+                }
+
                 int currentPosition = viewPager.getCurrentItem();
                 if (velocityX > 0) {
                     if (currentPosition - 1 >= 0) {
@@ -85,6 +113,9 @@ public class MainActivity extends AppCompatActivity {
         headerImageAnimator.setOnTouchListener((v, event) -> gestureDetector.onTouchEvent(event));
 
         final ViewAnimator viewAnimator = (ViewAnimator) headerImageAnimator;
+        viewAnimator.setDisplayedChild(0);
+        viewAnimator.setInAnimation(getApplication(), R.anim.alpha_background_in);
+        viewAnimator.setOutAnimation(getApplication(), R.anim.alpha_background_out);
         viewPager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
             private int previousPosition = -1;
             private int selectedPosition = -1;
@@ -93,19 +124,33 @@ public class MainActivity extends AppCompatActivity {
             public void onPageSelected(int position) {
                 previousPosition = selectedPosition;
                 selectedPosition = position;
+                final View previous = viewAnimator.getChildAt(previousPosition);
+                final View selected = viewAnimator.getChildAt(selectedPosition);
+                final int animateIn;
+                final int animateOut;
                 if (previousPosition < selectedPosition) {
-                    viewAnimator.setInAnimation(getApplication(), R.anim.left_in);
-                    viewAnimator.setOutAnimation(getApplication(), R.anim.left_out);
+                    animateIn = R.anim.left_in;
+                    animateOut = R.anim.left_out;
                 } else {
-                    viewAnimator.setInAnimation(getApplication(), R.anim.right_in);
-                    viewAnimator.setOutAnimation(getApplication(), R.anim.right_out);
+                    animateIn = R.anim.right_in;
+                    animateOut = R.anim.right_out;
                 }
-
                 viewAnimator.setDisplayedChild(position);
+                animateView(selected, animateIn);
+                animateView(previous, animateOut);
             }
         });
         CenterScaleIndicator indicator = findViewById(R.id.tab_indicator);
         indicator.attachViewPager(viewPager);
+    }
+
+    private void animateView(View view, @AnimRes int animRes) {
+        if (view != null) {
+            View icon = view.findViewById(R.id.image_icon);
+            if (icon != null) {
+                icon.startAnimation(AnimationUtils.loadAnimation(this, animRes));
+            }
+        }
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -240,5 +285,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Broadcaster.getInstance().removeRunnable(loadingRunnable);
+    }
 
 }

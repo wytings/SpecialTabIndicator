@@ -27,34 +27,30 @@ public abstract class AbsHeaderInfoBehavior<V extends View> extends CoordinatorL
     private ArgbEvaluator argbEvaluator;
     protected final int lightColor;
     protected final int darkColor;
+    private CoordinatorLayout coordinatorLayout;
+    protected final int dependencyCollapseHeight, dependencyInitHeight;
 
     public AbsHeaderInfoBehavior(Context context, AttributeSet attrs) {
         super(context, attrs);
         this.context = context;
         lightColor = Color.TRANSPARENT;
         darkColor = ContextCompat.getColor(context, R.color.dark_background_color);
+        dependencyInitHeight = dp(262);
+        dependencyCollapseHeight = dp(68 + 40);
     }
 
     @Override
     public boolean layoutDependsOn(CoordinatorLayout parent, V child, View dependency) {
         if (dependency != null && dependency.getId() == R.id.header_layout) {
             dependentView = dependency;
+            this.coordinatorLayout = parent;
             return true;
         }
         return super.layoutDependsOn(parent, child, dependency);
     }
 
-    protected int getDependentViewCollapsedHeight() {
-        return dp(68 + 40);//(*3=324)
-    }
-
-    protected int getDependentViewInitHeight() {
-        return dp(220);//(*3=630)
-    }
-
-
     protected void changeBackgroundColor(View view, float progress, int lightColor, int darkColor) {
-        if (progress <= 0 || view == null) {
+        if (progress < 0 || view == null) {
             return;
         }
         if (argbEvaluator == null) {
@@ -83,9 +79,20 @@ public abstract class AbsHeaderInfoBehavior<V extends View> extends CoordinatorL
     }
 
     protected float getDependencyHeightProgress() {
-        final int gap = getDependencyHeight() - getDependentViewCollapsedHeight();
-        final int base = getDependentViewInitHeight() - getDependentViewCollapsedHeight();
+        final int gap = getDependencyHeight() - dependencyCollapseHeight;
+        final int base = dependencyInitHeight - dependencyCollapseHeight;
         return 1.0f - 1.0f * gap / base;
+    }
+
+    protected boolean isAutoScrolling() {
+        if (coordinatorLayout != null && coordinatorLayout.getTag() instanceof StatusBehavior) {
+            return ((StatusBehavior) coordinatorLayout.getTag()).isAutoScrolling;
+        }
+        return false;
+    }
+
+    protected static class StatusBehavior {
+        protected boolean isAutoScrolling;
     }
 
 }

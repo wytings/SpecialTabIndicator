@@ -6,7 +6,7 @@
 
     <color name="dark_background_color">#F71A1E23</color>
     <color name="blue_light">#499EF0</color>
-    <color name="white_color_50">#7C7E81</color>
-    <color name="white_color_70">#ADADB0</color>
+    <color name="white_color_70">#B2FFFFFF</color>
+    <color name="white_color_50">#80FFFFFF</color>
 
 </resources>
