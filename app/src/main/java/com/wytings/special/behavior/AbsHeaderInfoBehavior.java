@@ -23,19 +23,21 @@ import static android.util.TypedValue.COMPLEX_UNIT_DIP;
 public abstract class AbsHeaderInfoBehavior<V extends View> extends CoordinatorLayout.Behavior<V> {
 
     private final Context context;
-    protected View dependentView;
-    private ArgbEvaluator argbEvaluator;
     protected final int lightColor;
     protected final int darkColor;
-    private CoordinatorLayout coordinatorLayout;
+    private final ArgbEvaluator argbEvaluator = new ArgbEvaluator();
     protected final int dependencyCollapseHeight, dependencyInitHeight;
+
+    private CoordinatorLayout coordinatorLayout;
+    protected View dependentView;
+
 
     public AbsHeaderInfoBehavior(Context context, AttributeSet attrs) {
         super(context, attrs);
         this.context = context;
         lightColor = Color.TRANSPARENT;
         darkColor = ContextCompat.getColor(context, R.color.dark_background_color);
-        dependencyInitHeight = dp(262);
+        dependencyInitHeight = dp(220);
         dependencyCollapseHeight = dp(68 + 40);
     }
 
@@ -53,16 +55,10 @@ public abstract class AbsHeaderInfoBehavior<V extends View> extends CoordinatorL
         if (progress < 0 || view == null) {
             return;
         }
-        if (argbEvaluator == null) {
-            argbEvaluator = new ArgbEvaluator();
-        }
         view.setBackgroundColor(getEvaluateColor(progress, lightColor, darkColor));
     }
 
     protected int getEvaluateColor(float progress, int lightColor, int darkColor) {
-        if (argbEvaluator == null) {
-            argbEvaluator = new ArgbEvaluator();
-        }
         return (int) argbEvaluator.evaluate(progress, lightColor, darkColor);
     }
 
