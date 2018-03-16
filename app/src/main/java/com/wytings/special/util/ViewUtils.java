@@ -1,18 +1,12 @@
 package com.wytings.special.util;
 
 import android.app.Activity;
-import android.content.Context;
 import android.graphics.Color;
-import android.graphics.Matrix;
-import android.graphics.drawable.Drawable;
 import android.os.Build;
-import android.support.annotation.IdRes;
-import android.support.v4.view.ViewCompat;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.ImageView;
 
 /**
  * Created by Rex on 2018/03/07.
@@ -25,8 +19,10 @@ public final class ViewUtils {
     public static void transparentStatusBar(Activity activity) {
         final Window window = activity.getWindow();
         final View decorView = window.getDecorView();
+
         final int option = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
         decorView.setSystemUiVisibility(option);
+
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             window.setStatusBarColor(Color.TRANSPARENT);
@@ -36,11 +32,21 @@ public final class ViewUtils {
     }
 
     public static int getViewLayoutParamsHeight(View view) {
+
+        final ViewGroup.LayoutParams params = view.getLayoutParams();
+        if (params == null) {
+            return 0;
+        }
         return view.getLayoutParams().height;
     }
 
     public static void setViewLayoutParamsHeight(View view, int height) {
-        ViewGroup.LayoutParams params = view.getLayoutParams();
+
+        final ViewGroup.LayoutParams params = view.getLayoutParams();
+        if (params == null) {
+            return;
+        }
+
         params.height = height;
         view.setLayoutParams(params);
     }

@@ -8,7 +8,6 @@ import android.util.AttributeSet;
 import android.view.View;
 
 import com.wytings.special.R;
-import com.wytings.special.util.G;
 import com.wytings.special.widget.CenterScaleIndicator;
 
 /**

@@ -23,16 +23,16 @@ import static android.util.TypedValue.COMPLEX_UNIT_DIP;
 public abstract class AbsHeaderInfoBehavior<V extends View> extends CoordinatorLayout.Behavior<V> {
 
     private final Context context;
-    protected final int lightColor;
-    protected final int darkColor;
+    final int lightColor;
+    final int darkColor;
     private final ArgbEvaluator argbEvaluator = new ArgbEvaluator();
-    protected final int dependencyCollapseHeight, dependencyInitHeight;
+    final int dependencyCollapseHeight, dependencyInitHeight;
 
     private CoordinatorLayout coordinatorLayout;
-    protected View dependentView;
+    View dependentView;
 
 
-    public AbsHeaderInfoBehavior(Context context, AttributeSet attrs) {
+    AbsHeaderInfoBehavior(Context context, AttributeSet attrs) {
         super(context, attrs);
         this.context = context;
         lightColor = Color.TRANSPARENT;
@@ -51,44 +51,43 @@ public abstract class AbsHeaderInfoBehavior<V extends View> extends CoordinatorL
         return super.layoutDependsOn(parent, child, dependency);
     }
 
-    protected void changeBackgroundColor(View view, float progress, int lightColor, int darkColor) {
+    void changeBackgroundColor(View view, float progress, int lightColor, int darkColor) {
         if (progress < 0 || view == null) {
             return;
         }
         view.setBackgroundColor(getEvaluateColor(progress, lightColor, darkColor));
     }
 
-    protected int getEvaluateColor(float progress, int lightColor, int darkColor) {
+    int getEvaluateColor(float progress, int lightColor, int darkColor) {
         return (int) argbEvaluator.evaluate(progress, lightColor, darkColor);
     }
 
-    protected int dp(int dp) {
+    int dp(int dp) {
         return (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, dp, context.getResources().getDisplayMetrics());
     }
 
-    protected void setViewParamsHeight(View view, int height) {
+    void setViewParamsHeight(View view, int height) {
         ViewUtils.setViewLayoutParamsHeight(view, height);
     }
 
-    protected int getDependencyHeight() {
+    int getDependencyHeight() {
         return ViewUtils.getViewLayoutParamsHeight(dependentView);
     }
 
-    protected float getDependencyHeightProgress() {
+    float getDependencyHeightProgress() {
         final int gap = getDependencyHeight() - dependencyCollapseHeight;
         final int base = dependencyInitHeight - dependencyCollapseHeight;
         return 1.0f - 1.0f * gap / base;
     }
 
-    protected boolean isAutoScrolling() {
-        if (coordinatorLayout != null && coordinatorLayout.getTag() instanceof StatusBehavior) {
-            return ((StatusBehavior) coordinatorLayout.getTag()).isAutoScrolling;
-        }
-        return false;
+    boolean isAutoScrolling() {
+        return coordinatorLayout != null
+                && coordinatorLayout.getTag() instanceof StatusBehavior
+                && ((StatusBehavior) coordinatorLayout.getTag()).isAutoScrolling;
     }
 
-    protected static class StatusBehavior {
-        protected boolean isAutoScrolling;
+    static class StatusBehavior {
+        boolean isAutoScrolling;
     }
 
 }

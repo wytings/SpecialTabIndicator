@@ -63,10 +63,7 @@ public class ViewPagerBehavior extends AbsHeaderInfoBehavior<ViewPager> {
 
     @Override
     public boolean onStartNestedScroll(@NonNull CoordinatorLayout coordinatorLayout, @NonNull ViewPager child, @NonNull View directTargetChild, @NonNull View target, int nestedScrollAxes, int type) {
-        if (type != ViewCompat.TYPE_TOUCH) {
-            return false;
-        }
-        return (nestedScrollAxes & ViewCompat.SCROLL_AXIS_VERTICAL) != 0;
+        return type == ViewCompat.TYPE_TOUCH && (nestedScrollAxes & ViewCompat.SCROLL_AXIS_VERTICAL) != 0;
     }
 
     @Override
@@ -158,16 +155,11 @@ public class ViewPagerBehavior extends AbsHeaderInfoBehavior<ViewPager> {
             return false;
         }
 
-        final boolean willCollapse;
         if (Math.abs(velocity) <= 800) {
             velocity = 800;
         }
 
-        if (currentHeight < (dependencyInitHeight + dependencyCollapseHeight) / 2) {
-            willCollapse = true;
-        } else {
-            willCollapse = false;
-        }
+        final boolean willCollapse = currentHeight < (dependencyInitHeight + dependencyCollapseHeight) / 2;
 
         float targetHeight = willCollapse ? dependencyCollapseHeight : dependencyInitHeight;
 

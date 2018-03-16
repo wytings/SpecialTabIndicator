@@ -58,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ViewUtils.transparentStatusBar(this);
+
         viewPager = findViewById(R.id.view_pager);
         loadingRunnable = () -> {
             final int currentPosition = viewPager.getCurrentItem();

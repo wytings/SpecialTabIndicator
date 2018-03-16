@@ -2,10 +2,9 @@ package com.wytings.special.behavior;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
-import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
@@ -32,10 +31,8 @@ public class TitleBarBehavior extends AbsHeaderInfoBehavior<View> {
     private final ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, 360);
     private final Runnable stopLoadingRunnable;
 
-    private ImageView imageBack;
+    private ImageView imageBack, progressView;
     private TextView textTitle;
-    private View progressView;
-    private Drawable wrappedDrawable, progressDrawable;
 
     public TitleBarBehavior(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -43,9 +40,7 @@ public class TitleBarBehavior extends AbsHeaderInfoBehavior<View> {
         valueAnimator.setDuration(500);
         valueAnimator.setInterpolator(new LinearInterpolator());
         valueAnimator.setRepeatCount(ValueAnimator.INFINITE);
-        valueAnimator.addUpdateListener(animation -> {
-            progressView.setRotation((Float) animation.getAnimatedValue());
-        });
+        valueAnimator.addUpdateListener(animation -> progressView.setRotation((Float) animation.getAnimatedValue()));
         stopLoadingRunnable = this::cancelProgress;
         Broadcaster.getInstance().listenEvent(Event.ACTION_INFO_STOP_LOADING, stopLoadingRunnable);
     }
@@ -64,8 +59,14 @@ public class TitleBarBehavior extends AbsHeaderInfoBehavior<View> {
         textTitle.setTextColor(getEvaluateColor(progress < 0.4f ? 0 : progress, Color.TRANSPARENT, Color.WHITE));
 
         ColorStateList tint = ColorStateList.valueOf(getEvaluateColor(progress, Color.WHITE, blueColor));
-        DrawableCompat.setTintList(wrappedDrawable, tint);
-        DrawableCompat.setTintList(progressDrawable, tint);
+        DrawableCompat.setTintList(imageBack.getDrawable(), tint);
+        DrawableCompat.setTintList(progressView.getDrawable(), tint);
+
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP_MR1) {
+            imageBack.invalidate();
+            progressView.invalidate();
+        }
+
 
         return false;
     }
@@ -106,8 +107,10 @@ public class TitleBarBehavior extends AbsHeaderInfoBehavior<View> {
             imageBack = view.findViewById(R.id.back);
             textTitle = view.findViewById(R.id.title);
             progressView = view.findViewById(R.id.progress);
-            wrappedDrawable = DrawableCompat.wrap(imageBack.getDrawable());
-            progressDrawable = DrawableCompat.wrap(((ImageView) progressView).getDrawable());
+
+            imageBack.setImageDrawable(DrawableCompat.wrap(imageBack.getDrawable().mutate()));
+            progressView.setImageDrawable(DrawableCompat.wrap((progressView).getDrawable().mutate()));
+
             progressView.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
                 @Override
                 public void onViewAttachedToWindow(View v) {
