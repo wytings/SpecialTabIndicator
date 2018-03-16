@@ -17,23 +17,24 @@
             android:layout_height="match_parent">
 
             <include
-                android:id="@+id/top_news"
+                android:id="@+id/a1"
+                layout="@layout/header_item_layout" />
+
+
+            <include
+                android:id="@+id/a2"
                 layout="@layout/header_item_layout" />
 
             <include
-                android:id="@+id/calendar"
+                android:id="@+id/a3"
                 layout="@layout/header_item_layout" />
 
             <include
-                android:id="@+id/stock_change"
+                android:id="@+id/a4"
                 layout="@layout/header_item_layout" />
 
             <include
-                android:id="@+id/research"
-                layout="@layout/header_item_layout" />
-
-            <include
-                android:id="@+id/micro_report"
+                android:id="@+id/a5"
                 layout="@layout/header_item_layout" />
         </ViewAnimator>
 

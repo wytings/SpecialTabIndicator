@@ -1,6 +1,7 @@
 package com.wytings.special;
 
 import android.annotation.SuppressLint;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
@@ -9,6 +10,7 @@ import android.support.annotation.DrawableRes;
 import android.support.annotation.IdRes;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
@@ -155,11 +157,11 @@ public class MainActivity extends AppCompatActivity {
 
     @SuppressLint("ClickableViewAccessibility")
     private void initCategoryHeader() {
-        initSingleCategoryHeader(R.id.top_news, R.drawable.ic_news, "#008EFF", "#193BC3");
-        initSingleCategoryHeader(R.id.calendar, R.drawable.ic_calendar, "#5739EE", "#4225AA");
-        initSingleCategoryHeader(R.id.stock_change, R.drawable.ic_signal, "#1EC9BC", "#005EB4");
-        initSingleCategoryHeader(R.id.research, R.drawable.ic_report, "#C467F7", "#6919EB");
-        initSingleCategoryHeader(R.id.micro_report, R.drawable.ic_search, "#FE6B4B", "#AB2525");
+        initSingleCategoryHeader(R.id.a1, R.drawable.snowflake, "#008EFF", "#193BC3");
+        initSingleCategoryHeader(R.id.a2, R.drawable.snowflake, "#5739EE", "#4225AA");
+        initSingleCategoryHeader(R.id.a3, R.drawable.snowflake, "#1EC9BC", "#005EB4");
+        initSingleCategoryHeader(R.id.a4, R.drawable.snowflake, "#C467F7", "#6919EB");
+        initSingleCategoryHeader(R.id.a5, R.drawable.snowflake, "#FE6B4B", "#AB2525");
         View back = findViewById(R.id.back);
         back.setOnClickListener(v -> finish());
         back.setOnTouchListener((v, event) -> {
@@ -180,6 +182,9 @@ public class MainActivity extends AppCompatActivity {
         view.setBackground(gradient);
         ImageView imageView = view.findViewById(R.id.image_icon);
         imageView.setImageResource(drawableRes);
+        DrawableCompat.setTintList(DrawableCompat.wrap(imageView.getDrawable()), ColorStateList.valueOf(Color.parseColor(startColor)));
+
+
     }
 
 
@@ -269,15 +274,15 @@ public class MainActivity extends AppCompatActivity {
         public CharSequence getPageTitle(int position) {
             switch (position) {
                 case 0:
-                    return "News";
+                    return "Alphabet";
                 case 1:
-                    return "Calendar";
+                    return "Google";
                 case 2:
-                    return "Signal";
+                    return "Android";
                 case 3:
-                    return "Report";
+                    return "Flutter";
                 case 4:
-                    return "Research";
+                    return "TensorFlow";
                 default:
                     return "Title " + position;
             }

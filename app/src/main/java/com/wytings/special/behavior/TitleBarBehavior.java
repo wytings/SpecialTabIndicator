@@ -106,8 +106,8 @@ public class TitleBarBehavior extends AbsHeaderInfoBehavior<View> {
             imageBack = view.findViewById(R.id.back);
             textTitle = view.findViewById(R.id.title);
             progressView = view.findViewById(R.id.progress);
-            wrappedDrawable = DrawableCompat.wrap(imageBack.getDrawable()).mutate();
-            progressDrawable = DrawableCompat.wrap(((ImageView) progressView).getDrawable()).mutate();
+            wrappedDrawable = DrawableCompat.wrap(imageBack.getDrawable());
+            progressDrawable = DrawableCompat.wrap(((ImageView) progressView).getDrawable());
             progressView.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
                 @Override
                 public void onViewAttachedToWindow(View v) {
