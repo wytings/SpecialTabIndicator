@@ -8,9 +8,9 @@ import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.View;
+import android.view.ViewGroup;
 
 import com.wytings.special.R;
-import com.wytings.special.util.ViewUtils;
 
 import static android.util.TypedValue.COMPLEX_UNIT_DIP;
 
@@ -20,7 +20,10 @@ import static android.util.TypedValue.COMPLEX_UNIT_DIP;
  */
 
 
-public abstract class AbsHeaderInfoBehavior<V extends View> extends CoordinatorLayout.Behavior<V> {
+public abstract class BaseBehavior<V extends View> extends CoordinatorLayout.Behavior<V> {
+
+    public static final String ACTION_INFO_START_LOADING = "ACTION_INFO_START_LOADING";
+    public static final String ACTION_INFO_STOP_LOADING = "ACTION_INFO_STOP_LOADING";
 
     private final Context context;
     final int lightColor;
@@ -32,7 +35,7 @@ public abstract class AbsHeaderInfoBehavior<V extends View> extends CoordinatorL
     View dependentView;
 
 
-    AbsHeaderInfoBehavior(Context context, AttributeSet attrs) {
+    BaseBehavior(Context context, AttributeSet attrs) {
         super(context, attrs);
         this.context = context;
         lightColor = Color.TRANSPARENT;
@@ -67,11 +70,22 @@ public abstract class AbsHeaderInfoBehavior<V extends View> extends CoordinatorL
     }
 
     void setViewParamsHeight(View view, int height) {
-        ViewUtils.setViewLayoutParamsHeight(view, height);
+        final ViewGroup.LayoutParams params = view.getLayoutParams();
+        if (params == null) {
+            return;
+        }
+
+        params.height = height;
+        view.setLayoutParams(params);
     }
 
     int getDependencyHeight() {
-        return ViewUtils.getViewLayoutParamsHeight(dependentView);
+
+        final ViewGroup.LayoutParams params = dependentView.getLayoutParams();
+        if (params == null) {
+            return 0;
+        }
+        return dependentView.getLayoutParams().height;
     }
 
     float getDependencyHeightProgress() {

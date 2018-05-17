@@ -51,7 +51,7 @@
         android:layout_width="match_parent"
         android:layout_height="68dp"
         android:paddingTop="24dp"
-        app:layout_behavior="com.wytings.special.behavior.TitleBarBehavior">
+        app:layout_behavior="com.wytings.special.behavior.TitleLayoutBehavior">
 
         <ImageView
             android:id="@+id/back"
@@ -95,25 +95,25 @@
     </RelativeLayout>
 
 
-    <com.wytings.special.widget.CenterScaleIndicator
+    <com.wytings.special.widget.ScalableIndicator
         android:id="@+id/tab_indicator"
         android:layout_width="match_parent"
         android:layout_height="40dp"
-        app:indicator_divider_width="20dp"
-        app:indicator_line_color="@android:color/white"
-        app:indicator_line_height="3dp"
-        app:indicator_line_width="20dp"
-        app:indicator_scale_enabled="true"
-        app:indicator_text_selected_color="@android:color/white"
-        app:indicator_text_size="16sp"
-        app:indicator_text_unselected_color="@color/white_color_70"
-        app:layout_behavior="com.wytings.special.behavior.IndicatorBehavior" />
+        app:scalable_divider_width="20dp"
+        app:scalable_line_color="@android:color/white"
+        app:scalable_line_height="3dp"
+        app:scalable_line_width="20dp"
+        app:scalable_scale_enabled="true"
+        app:scalable_text_selected_color="@android:color/white"
+        app:scalable_text_size="16sp"
+        app:scalable_text_unselected_color="@color/white_color_70"
+        app:layout_behavior="com.wytings.special.behavior.TopIndicatorBehavior" />
 
     <android.support.v4.view.ViewPager
         android:id="@+id/view_pager"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_behavior="com.wytings.special.behavior.ViewPagerBehavior" />
+        app:layout_behavior="com.wytings.special.behavior.BottomPagerViewBehavior" />
 
 
 </android.support.design.widget.CoordinatorLayout>

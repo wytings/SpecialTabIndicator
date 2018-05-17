@@ -1,15 +1,22 @@
 package com.wytings.special;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.AnimRes;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.IdRes;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
@@ -20,47 +27,42 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.ViewAnimator;
 
-import com.wytings.special.behavior.IndicatorBehavior;
-import com.wytings.special.behavior.TitleBarBehavior;
-import com.wytings.special.behavior.ViewPagerBehavior;
-import com.wytings.special.util.Broadcaster;
-import com.wytings.special.util.Event;
+import com.wytings.special.behavior.TopIndicatorBehavior;
+import com.wytings.special.behavior.TitleLayoutBehavior;
+import com.wytings.special.behavior.BottomPagerViewBehavior;
 import com.wytings.special.util.G;
-import com.wytings.special.util.ViewUtils;
-import com.wytings.special.widget.CenterScaleIndicator;
+import com.wytings.special.widget.ScalableIndicator;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.wytings.special.behavior.BaseBehavior.ACTION_INFO_START_LOADING;
+import static com.wytings.special.behavior.BaseBehavior.ACTION_INFO_STOP_LOADING;
+
 /**
  * Created by rex.wei on 2018/02/26 12:00.
  * <p> we have three behaviors attached to this activity.
- * {@link IndicatorBehavior}
- * {@link TitleBarBehavior}
- * {@link ViewPagerBehavior}
+ * {@link TopIndicatorBehavior}
+ * {@link TitleLayoutBehavior}
+ * {@link BottomPagerViewBehavior}
  *
  * @author wytings@gmail.com
  */
 
 public class MainActivity extends AppCompatActivity {
 
-    private Runnable loadingRunnable;
     private ViewPager viewPager;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        ViewUtils.transparentStatusBar(this);
-
-        viewPager = findViewById(R.id.view_pager);
-        loadingRunnable = () -> {
+    private final BroadcastReceiver loading = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
             final int currentPosition = viewPager.getCurrentItem();
             if (viewPager.getAdapter() == null) {
                 G.e("ViewPager doesn't have Adapter");
@@ -69,22 +71,49 @@ public class MainActivity extends AppCompatActivity {
 
             G.d("start to loading top in position = %s", currentPosition);
             if (0 <= currentPosition && currentPosition <= viewPager.getAdapter().getCount()) {
-                viewPager.postDelayed(() -> Broadcaster.getInstance().notifyEvent(Event.ACTION_INFO_STOP_LOADING), 2000);
+                viewPager.postDelayed(() ->
+                                LocalBroadcastManager.getInstance(getApplication()).sendBroadcast(new Intent(ACTION_INFO_STOP_LOADING))
+                        , 2000);
             } else {
                 G.w("current position = %s is invalid", currentPosition);
             }
-        };
-        Broadcaster.getInstance().listenEvent(Event.ACTION_INFO_START_LOADING, loadingRunnable);
+        }
+    };
 
-        initCategoryHeader();
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        transparentStatusBar(this);
+
+        viewPager = findViewById(R.id.view_pager);
+        LocalBroadcastManager.getInstance(this).registerReceiver(loading, new IntentFilter(ACTION_INFO_START_LOADING));
+
+        initHeaderLayout();
         initPagerAnimator();
 
     }
 
+    private void transparentStatusBar(Activity activity) {
+        final Window window = activity.getWindow();
+        final View decorView = window.getDecorView();
+
+        final int option = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
+        decorView.setSystemUiVisibility(option);
+
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            window.setStatusBarColor(Color.TRANSPARENT);
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+        }
+    }
+
+
     @SuppressLint("ClickableViewAccessibility")
     private void initPagerAnimator() {
-        final View headerImageAnimator = findViewById(R.id.image_view_animator);
-        viewPager.setAdapter(new ViewPagerAdapter(createRecyclerViewList()));
+        final View headerAnimator = findViewById(R.id.image_view_animator);
+        viewPager.setAdapter(new Adapter(createRecyclerViewList()));
 
         final GestureDetector gestureDetector = new GestureDetector(getApplicationContext(), new GestureDetector.SimpleOnGestureListener() {
             @Override
@@ -113,13 +142,14 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        headerImageAnimator.setOnTouchListener((v, event) -> gestureDetector.onTouchEvent(event));
+        headerAnimator.setOnTouchListener((v, event) -> gestureDetector.onTouchEvent(event));
 
-        final ViewAnimator viewAnimator = (ViewAnimator) headerImageAnimator;
+        final ViewAnimator viewAnimator = (ViewAnimator) headerAnimator;
         viewAnimator.setDisplayedChild(0);
         viewAnimator.setInAnimation(getApplication(), R.anim.alpha_background_in);
         viewAnimator.setOutAnimation(getApplication(), R.anim.alpha_background_out);
         viewPager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+
             private int previousPosition = -1;
             private int selectedPosition = -1;
 
@@ -143,7 +173,7 @@ public class MainActivity extends AppCompatActivity {
                 animateView(previous, animateOut);
             }
         });
-        CenterScaleIndicator indicator = findViewById(R.id.tab_indicator);
+        ScalableIndicator indicator = findViewById(R.id.tab_indicator);
         indicator.attachViewPager(viewPager);
     }
 
@@ -157,12 +187,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    private void initCategoryHeader() {
-        initSingleCategoryHeader(R.id.a1, R.drawable.snowflake, "#008EFF", "#193BC3");
-        initSingleCategoryHeader(R.id.a2, R.drawable.snowflake, "#5739EE", "#4225AA");
-        initSingleCategoryHeader(R.id.a3, R.drawable.snowflake, "#1EC9BC", "#005EB4");
-        initSingleCategoryHeader(R.id.a4, R.drawable.snowflake, "#C467F7", "#6919EB");
-        initSingleCategoryHeader(R.id.a5, R.drawable.snowflake, "#FE6B4B", "#AB2525");
+    private void initHeaderLayout() {
+        setUpSingleHeader(R.id.a1, R.drawable.snowflake, "#008EFF", "#193BC3");
+        setUpSingleHeader(R.id.a2, R.drawable.snowflake, "#5739EE", "#4225AA");
+        setUpSingleHeader(R.id.a3, R.drawable.snowflake, "#1EC9BC", "#005EB4");
+        setUpSingleHeader(R.id.a4, R.drawable.snowflake, "#C467F7", "#6919EB");
+        setUpSingleHeader(R.id.a5, R.drawable.snowflake, "#FE6B4B", "#AB2525");
         View back = findViewById(R.id.back);
         back.setOnClickListener(v -> finish());
         back.setOnTouchListener((v, event) -> {
@@ -175,7 +205,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void initSingleCategoryHeader(@IdRes int idRes, @DrawableRes int drawableRes, String startColor, String endColor) {
+    private void setUpSingleHeader(@IdRes int idRes, @DrawableRes int drawableRes, String startColor, String endColor) {
         View view = findViewById(idRes);
         final int start = Color.parseColor(startColor);
         final int end = Color.parseColor(endColor);
@@ -240,11 +270,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private class ViewPagerAdapter extends PagerAdapter {
+    private class Adapter extends PagerAdapter {
 
         private final List<View> viewList;
 
-        private ViewPagerAdapter(List<View> viewList) {
+        private Adapter(List<View> viewList) {
             this.viewList = Collections.unmodifiableList(viewList);
         }
 
@@ -294,7 +324,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        Broadcaster.getInstance().removeRunnable(loadingRunnable);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(loading);
     }
 
 }

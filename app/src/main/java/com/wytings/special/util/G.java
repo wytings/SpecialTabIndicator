@@ -17,23 +17,11 @@ public final class G {
         Log.d(TAG, String.format(Locale.CHINA, msg, args));
     }
 
-    public static void i(String msg, Object... args) {
-        Log.i(TAG, String.format(Locale.CHINA, msg, args));
-    }
-
     public static void w(String msg, Object... args) {
         Log.w(TAG, String.format(Locale.CHINA, msg, args));
     }
 
-    public static void w(String msg, Throwable throwable) {
-        Log.w(TAG, String.format(Locale.CHINA, msg, Log.getStackTraceString(throwable)));
-    }
-
     public static void e(String msg, Object... args) {
         Log.e(TAG, String.format(Locale.CHINA, msg, args));
-    }
-
-    public static void e(String msg, Throwable throwable) {
-        Log.e(TAG, String.format(Locale.CHINA, msg, Log.getStackTraceString(throwable)));
     }
 }

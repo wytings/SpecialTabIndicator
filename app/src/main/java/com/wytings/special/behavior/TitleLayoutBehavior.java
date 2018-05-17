@@ -1,12 +1,16 @@
 package com.wytings.special.behavior;
 
 import android.animation.ValueAnimator;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Build;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.util.AttributeSet;
 import android.view.View;
@@ -15,8 +19,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.wytings.special.R;
-import com.wytings.special.util.Broadcaster;
-import com.wytings.special.util.Event;
 import com.wytings.special.util.G;
 
 /**
@@ -25,24 +27,29 @@ import com.wytings.special.util.G;
  */
 
 
-public class TitleBarBehavior extends AbsHeaderInfoBehavior<View> {
+public class TitleLayoutBehavior extends BaseBehavior<View> {
 
     private final int blueColor;
     private final ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, 360);
-    private final Runnable stopLoadingRunnable;
+    private final BroadcastReceiver stopLoading = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            cancelProgress();
+        }
+    };
 
-    private ImageView imageBack, progressView;
+    private ImageView imageBack;
+    private ImageView progressView;
     private TextView textTitle;
 
-    public TitleBarBehavior(Context context, AttributeSet attrs) {
+    public TitleLayoutBehavior(Context context, AttributeSet attrs) {
         super(context, attrs);
         blueColor = ContextCompat.getColor(context, R.color.blue_light);
         valueAnimator.setDuration(500);
         valueAnimator.setInterpolator(new LinearInterpolator());
         valueAnimator.setRepeatCount(ValueAnimator.INFINITE);
         valueAnimator.addUpdateListener(animation -> progressView.setRotation((Float) animation.getAnimatedValue()));
-        stopLoadingRunnable = this::cancelProgress;
-        Broadcaster.getInstance().listenEvent(Event.ACTION_INFO_STOP_LOADING, stopLoadingRunnable);
+        LocalBroadcastManager.getInstance(context).registerReceiver(stopLoading, new IntentFilter(ACTION_INFO_STOP_LOADING));
     }
 
     @Override
@@ -83,7 +90,8 @@ public class TitleBarBehavior extends AbsHeaderInfoBehavior<View> {
             if (isAutoScrolling()) {
                 if (progressView.getRotation() > 360) {
                     valueAnimator.start();
-                    Broadcaster.getInstance().notifyEvent(Event.ACTION_INFO_START_LOADING);
+                    LocalBroadcastManager.getInstance(progressView.getContext())
+                            .sendBroadcast(new Intent(ACTION_INFO_START_LOADING));
                 }
             }
         } else {
@@ -122,7 +130,7 @@ public class TitleBarBehavior extends AbsHeaderInfoBehavior<View> {
                     G.d("progressView  onViewDetachedFromWindow");
                     valueAnimator.cancel();
                     progressView.removeOnAttachStateChangeListener(this);
-                    Broadcaster.getInstance().removeRunnable(stopLoadingRunnable);
+                    LocalBroadcastManager.getInstance(v.getContext()).unregisterReceiver(stopLoading);
                 }
             });
         }

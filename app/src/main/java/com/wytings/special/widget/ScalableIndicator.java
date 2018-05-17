@@ -38,33 +38,32 @@ import static android.widget.LinearLayout.SHOW_DIVIDER_MIDDLE;
  * https://github.com/wytings
  */
 
-public class CenterScaleIndicator extends HorizontalScrollView {
+public class ScalableIndicator extends HorizontalScrollView {
 
     private static final int STYLE_MATCH_TAB = 0;
     private static final int STYLE_USER_DEFINED = 1;
 
-    private int indicatorColor = 0xff499EF0;
-    private int indicatorHeight = 2;
-    private int tabBottomPadding = 5;
-    private int indicatorWidth = 20;
-    private int dividerWidth = 20;
-    private float tabTextSize = 15;
-    private int unselectedTextColor = 0x80FFFFFF;
-    private int selectedTextColor = indicatorColor;
-    private float baseScale = 0.4f;
-    private boolean isScaleEnabled = true;
-    private int lineStyle = STYLE_USER_DEFINED;
 
     private int tabCount;
-    private int previousPosition = -1;
-    private int currentPosition = 0;
-    private float currentPositionOffsetRatio = 0f;
     private ViewPager pager;
+    private final Paint paint;
+    private int dividerWidth = 20;
+    private float tabTextSize = 15;
+    private float baseScale = 0.4f;
+    private int indicatorHeight = 2;
+    private int indicatorWidth = 20;
+    private int currentPosition = 0;
+    private int tabBottomPadding = 5;
     private Animator runningAnimator;
-
-    private final Paint rectPaint;
-    private final Rect visibleRect = new Rect();
+    private int previousPosition = -1;
+    private boolean isScaleEnabled = true;
+    private int indicatorColor = 0xff499EF0;
     private final LinearLayout tabsContainer;
+    private int lineStyle = STYLE_USER_DEFINED;
+    private int selectedTextColor = 0xff499EF0;
+    private final Rect visibleRect = new Rect();
+    private int unselectedTextColor = 0x80FFFFFF;
+    private float currentPositionOffsetRatio = 0f;
     private final ViewPager.OnPageChangeListener pageListener = new ViewPager.OnPageChangeListener() {
 
         @Override
@@ -83,7 +82,7 @@ public class CenterScaleIndicator extends HorizontalScrollView {
                 lastTab.setTextColor(unselectedTextColor);
             }
             smoothScrollBy(getScrollXDistance(position), 0);
-            animateTabText(position);
+            animateTabTitle(position);
             previousPosition = position;
         }
 
@@ -99,7 +98,117 @@ public class CenterScaleIndicator extends HorizontalScrollView {
 
     };
 
-    private void animateTabText(int position) {
+
+    public ScalableIndicator(Context context) {
+        this(context, null);
+    }
+
+    public ScalableIndicator(Context context, AttributeSet attrs) {
+        this(context, attrs, 0);
+    }
+
+    public ScalableIndicator(Context context, AttributeSet attrs, int defStyle) {
+        super(context, attrs, defStyle);
+
+        DisplayMetrics dm = getResources().getDisplayMetrics();
+        indicatorHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, indicatorHeight, dm);
+        indicatorWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, indicatorWidth, dm);
+        tabBottomPadding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, tabBottomPadding, dm);
+        dividerWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dividerWidth, dm);
+        tabTextSize = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, tabTextSize, dm);
+
+        parseIndicatorAttrs(context, attrs);
+
+        paint = new Paint();
+        paint.setAntiAlias(true);
+        paint.setStyle(Style.FILL);
+        paint.setColor(indicatorColor);
+
+        tabsContainer = createTabContainer(context);
+        addView(tabsContainer);
+
+        if (isInEditMode()) {
+            tabsContainer.removeAllViews();
+            tabCount = 2;
+            addTab(0, createTextTab(0, "selected"));
+            addTab(1, createTextTab(1, "unselected"));
+
+        }
+    }
+
+    private void parseIndicatorAttrs(Context context, AttributeSet attrs) {
+
+        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.ScalableIndicator);
+        indicatorColor = typedArray.getColor(R.styleable.ScalableIndicator_scalable_line_color, indicatorColor);
+        indicatorHeight = typedArray.getDimensionPixelSize(R.styleable.ScalableIndicator_scalable_line_height, indicatorHeight);
+        indicatorWidth = typedArray.getDimensionPixelSize(R.styleable.ScalableIndicator_scalable_line_width, indicatorWidth);
+        tabBottomPadding = typedArray.getDimensionPixelSize(R.styleable.ScalableIndicator_scalable_tab_bottom_padding, tabBottomPadding);
+        dividerWidth = typedArray.getDimensionPixelSize(R.styleable.ScalableIndicator_scalable_divider_width, dividerWidth);
+        baseScale = typedArray.getFloat(R.styleable.ScalableIndicator_scalable_base_scale, baseScale);
+        isScaleEnabled = typedArray.getBoolean(R.styleable.ScalableIndicator_scalable_scale_enabled, isScaleEnabled);
+        lineStyle = typedArray.getInt(R.styleable.ScalableIndicator_scalable_line_style, lineStyle);
+
+        tabTextSize = typedArray.getDimensionPixelSize(R.styleable.ScalableIndicator_scalable_text_size, (int) tabTextSize);
+        unselectedTextColor = typedArray.getColor(R.styleable.ScalableIndicator_scalable_text_unselected_color, unselectedTextColor);
+        selectedTextColor = typedArray.getColor(R.styleable.ScalableIndicator_scalable_text_selected_color, selectedTextColor);
+
+        typedArray.recycle();
+    }
+
+    public void setBaseScale(float baseScale) {
+        this.baseScale = baseScale;
+    }
+
+    public float getBaseScale() {
+        return baseScale;
+    }
+
+    public void setSelectedTextColor(int selectedTextColor) {
+        this.selectedTextColor = selectedTextColor;
+    }
+
+    public void setUnselectedTextColor(int unselectedTextColor) {
+        this.unselectedTextColor = unselectedTextColor;
+    }
+
+    public void setIndicatorColor(int indicatorColor) {
+        this.indicatorColor = indicatorColor;
+        this.paint.setColor(indicatorColor);
+    }
+
+    private LinearLayout createTabContainer(Context context) {
+        LinearLayout container = new LinearLayout(context);
+        container.setOrientation(LinearLayout.HORIZONTAL);
+        container.setGravity(Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
+
+        LayoutParams linearLayoutParams = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT);
+        container.setLayoutParams(linearLayoutParams);
+
+        ShapeDrawable shapeDrawable = new ShapeDrawable();
+        shapeDrawable.getPaint().setColor(Color.TRANSPARENT);
+        shapeDrawable.setIntrinsicWidth(dividerWidth);
+
+        container.setDividerDrawable(shapeDrawable);
+        container.setShowDividers(SHOW_DIVIDER_BEGINNING | SHOW_DIVIDER_MIDDLE | SHOW_DIVIDER_END);
+
+        return container;
+    }
+
+
+    public void invalidateImmediately() {
+        final int count = tabsContainer.getChildCount();
+        if (count <= 0) {
+            return;
+        }
+        for (int i = 0; i < count; i++) {
+            TextView textView = (TextView) tabsContainer.getChildAt(i);
+            updateTextStyle(textView, i);
+        }
+        invalidate();
+        G.d("invalidate immediately , current position = %s", currentPosition);
+    }
+
+    private void animateTabTitle(int position) {
         final TextView previousTextView = (TextView) tabsContainer.getChildAt(previousPosition);
         final TextView currentTextView = (TextView) tabsContainer.getChildAt(position);
         ValueAnimator selectedToUnSelected = ValueAnimator.ofInt(selectedTextColor, unselectedTextColor);
@@ -143,109 +252,6 @@ public class CenterScaleIndicator extends HorizontalScrollView {
 
         set.start();
         runningAnimator = set;
-    }
-
-    public CenterScaleIndicator(Context context) {
-        this(context, null);
-    }
-
-    public CenterScaleIndicator(Context context, AttributeSet attrs) {
-        this(context, attrs, 0);
-    }
-
-    public CenterScaleIndicator(Context context, AttributeSet attrs, int defStyle) {
-        super(context, attrs, defStyle);
-        setFillViewport(true);
-        setWillNotDraw(false);
-        obtainAttrs(context, attrs);
-
-        rectPaint = new Paint();
-        rectPaint.setAntiAlias(true);
-        rectPaint.setStyle(Style.FILL);
-        rectPaint.setColor(indicatorColor);
-
-        tabsContainer = createTabContainer(context);
-        addView(tabsContainer);
-
-        showEditModeLayout();
-    }
-
-    private void obtainAttrs(Context context, AttributeSet attrs) {
-        DisplayMetrics dm = getResources().getDisplayMetrics();
-        indicatorHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, indicatorHeight, dm);
-        indicatorWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, indicatorWidth, dm);
-        tabBottomPadding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, tabBottomPadding, dm);
-        dividerWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dividerWidth, dm);
-        tabTextSize = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, tabTextSize, dm);
-
-        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.CenterScaleIndicator);
-        indicatorColor = typedArray.getColor(R.styleable.CenterScaleIndicator_indicator_line_color, indicatorColor);
-        indicatorHeight = typedArray.getDimensionPixelSize(R.styleable.CenterScaleIndicator_indicator_line_height, indicatorHeight);
-        indicatorWidth = typedArray.getDimensionPixelSize(R.styleable.CenterScaleIndicator_indicator_line_width, indicatorWidth);
-        tabBottomPadding = typedArray.getDimensionPixelSize(R.styleable.CenterScaleIndicator_indicator_tab_bottom_padding, tabBottomPadding);
-        dividerWidth = typedArray.getDimensionPixelSize(R.styleable.CenterScaleIndicator_indicator_divider_width, dividerWidth);
-        baseScale = typedArray.getFloat(R.styleable.CenterScaleIndicator_indicator_base_scale, baseScale);
-        isScaleEnabled = typedArray.getBoolean(R.styleable.CenterScaleIndicator_indicator_scale_enabled, isScaleEnabled);
-        lineStyle = typedArray.getInt(R.styleable.CenterScaleIndicator_indicator_line_style, lineStyle);
-
-        tabTextSize = typedArray.getDimensionPixelSize(R.styleable.CenterScaleIndicator_indicator_text_size, (int) tabTextSize);
-        unselectedTextColor = typedArray.getColor(R.styleable.CenterScaleIndicator_indicator_text_unselected_color, unselectedTextColor);
-        selectedTextColor = typedArray.getColor(R.styleable.CenterScaleIndicator_indicator_text_selected_color, selectedTextColor);
-
-        typedArray.recycle();
-    }
-
-    public void setBaseScale(float baseScale) {
-        this.baseScale = baseScale;
-    }
-
-    public float getBaseScale() {
-        return baseScale;
-    }
-
-    public void setSelectedTextColor(int selectedTextColor) {
-        this.selectedTextColor = selectedTextColor;
-    }
-
-    public void setUnselectedTextColor(int unselectedTextColor) {
-        this.unselectedTextColor = unselectedTextColor;
-    }
-
-    public void setIndicatorColor(int indicatorColor) {
-        this.indicatorColor = indicatorColor;
-        this.rectPaint.setColor(indicatorColor);
-    }
-
-    public void setTabTextSize(float tabTextSize) {
-        this.tabTextSize = tabTextSize;
-    }
-
-    private void showEditModeLayout() {
-        if (isInEditMode()) {
-            tabsContainer.removeAllViews();
-            tabCount = 2;
-            addTab(0, createTextTab(0, "selected"));
-            addTab(1, createTextTab(1, "unselected"));
-
-        }
-    }
-
-    private LinearLayout createTabContainer(Context context) {
-        LinearLayout container = new LinearLayout(context);
-        container.setOrientation(LinearLayout.HORIZONTAL);
-        container.setGravity(Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
-
-        LayoutParams linearLayoutParams = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT);
-        container.setLayoutParams(linearLayoutParams);
-
-        ShapeDrawable shapeDrawable = new ShapeDrawable();
-        shapeDrawable.getPaint().setColor(Color.TRANSPARENT);
-        shapeDrawable.setIntrinsicWidth(dividerWidth);
-
-        container.setDividerDrawable(shapeDrawable);
-        container.setShowDividers(SHOW_DIVIDER_BEGINNING | SHOW_DIVIDER_MIDDLE | SHOW_DIVIDER_END);
-
-        return container;
     }
 
     public void attachViewPager(@NonNull ViewPager pager) {
@@ -366,23 +372,7 @@ public class CenterScaleIndicator extends HorizontalScrollView {
             lineRight = currentPositionOffsetRatio * nextTabRight + (1f - currentPositionOffsetRatio) * lineRight;
         }
 
-        canvas.drawRect(lineLeft, height - indicatorHeight, lineRight, height, rectPaint);
+        canvas.drawRect(lineLeft, height - indicatorHeight, lineRight, height, paint);
     }
 
-    public int getTabCount() {
-        return tabCount;
-    }
-
-    public void forceInvalidate() {
-        final int count = tabsContainer.getChildCount();
-        if (count <= 0) {
-            return;
-        }
-        for (int i = 0; i < count; i++) {
-            TextView textView = (TextView) tabsContainer.getChildAt(i);
-            updateTextStyle(textView, i);
-        }
-        invalidate();
-        G.d("forceInvalidate , current position = %s", currentPosition);
-    }
 }

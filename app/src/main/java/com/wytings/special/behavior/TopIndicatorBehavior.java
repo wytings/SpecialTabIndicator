@@ -8,7 +8,7 @@ import android.util.AttributeSet;
 import android.view.View;
 
 import com.wytings.special.R;
-import com.wytings.special.widget.CenterScaleIndicator;
+import com.wytings.special.widget.ScalableIndicator;
 
 /**
  * Created by Rex on 2018/03/07.
@@ -16,17 +16,17 @@ import com.wytings.special.widget.CenterScaleIndicator;
  */
 
 
-public class IndicatorBehavior extends AbsHeaderInfoBehavior<View> {
+public class TopIndicatorBehavior extends BaseBehavior<View> {
 
     private View maskView;
-    private CenterScaleIndicator indicator;
+    private ScalableIndicator indicator;
     private final int selectedBlue;
     private final int unselectedWhite50;
     private final int unselectedWhite70;
     private float initBaseScale;
     private final int indicatorHeight;
 
-    public IndicatorBehavior(Context context, AttributeSet attrs) {
+    public TopIndicatorBehavior(Context context, AttributeSet attrs) {
         super(context, attrs);
         selectedBlue = ContextCompat.getColor(context, R.color.blue_light);
         unselectedWhite50 = ContextCompat.getColor(context, R.color.white_color_50);
@@ -42,7 +42,7 @@ public class IndicatorBehavior extends AbsHeaderInfoBehavior<View> {
 
         if (maskView == null) {
             maskView = dependency.findViewById(R.id.mask);
-            indicator = (CenterScaleIndicator) child;
+            indicator = (ScalableIndicator) child;
             initBaseScale = indicator.getBaseScale();
         }
 
@@ -66,7 +66,7 @@ public class IndicatorBehavior extends AbsHeaderInfoBehavior<View> {
         indicator.setSelectedTextColor(selected);
         indicator.setUnselectedTextColor(unselected);
 
-        indicator.forceInvalidate();
+        indicator.invalidateImmediately();
 
     }
 

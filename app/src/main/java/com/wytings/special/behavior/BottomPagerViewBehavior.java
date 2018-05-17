@@ -10,14 +10,12 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.widget.Scroller;
 
-import com.wytings.special.util.ViewUtils;
-
 /**
  * Created by Rex on 2018/03/07.
  * https://github.com/wytings
  */
 
-public class ViewPagerBehavior extends AbsHeaderInfoBehavior<ViewPager> {
+public class BottomPagerViewBehavior extends BaseBehavior<ViewPager> {
 
     private boolean isAutoScrollEnabled = false;
     private boolean isDragging = false;
@@ -37,7 +35,7 @@ public class ViewPagerBehavior extends AbsHeaderInfoBehavior<ViewPager> {
     };
     private final StatusBehavior statusBehavior = new StatusBehavior();
 
-    public ViewPagerBehavior(Context context, AttributeSet attrs) {
+    public BottomPagerViewBehavior(Context context, AttributeSet attrs) {
         super(context, attrs);
         scroller = new Scroller(context);
         mainHandler = new Handler();
@@ -150,7 +148,7 @@ public class ViewPagerBehavior extends AbsHeaderInfoBehavior<ViewPager> {
     }
 
     private boolean onAutoScrolling(float velocity) {// velocity>0 means dragging down, otherwise dragging up.
-        float currentHeight = ViewUtils.getViewLayoutParamsHeight(dependentView);
+        float currentHeight = getDependencyHeight();
         if (currentHeight == dependencyCollapseHeight || currentHeight == dependencyInitHeight) {
             return false;
         }
