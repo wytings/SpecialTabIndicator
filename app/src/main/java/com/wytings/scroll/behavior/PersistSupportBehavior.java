@@ -17,7 +17,7 @@ import com.wytings.special.util.LogUtils;
  *
  * @author weiyuting
  */
-public class ListViewBehavior extends AbsBehavior<View> {
+public class PersistSupportBehavior extends AbsBehavior<View> {
 
     private final Scroller scroller;
     private final Handler mainHandler;
@@ -36,7 +36,7 @@ public class ListViewBehavior extends AbsBehavior<View> {
         }
     };
 
-    public ListViewBehavior(Context context, AttributeSet attrs) {
+    public PersistSupportBehavior(Context context, AttributeSet attrs) {
         super(context, attrs, R.id.search_layout);
         scroller = new Scroller(context);
         mainHandler = new Handler();
