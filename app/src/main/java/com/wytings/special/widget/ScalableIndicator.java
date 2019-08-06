@@ -26,7 +26,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.wytings.special.R;
-import com.wytings.special.util.G;
+import com.wytings.special.util.LogUtils;
 
 import static android.support.v4.view.ViewPager.SCROLL_STATE_DRAGGING;
 import static android.widget.LinearLayout.SHOW_DIVIDER_BEGINNING;
@@ -205,7 +205,7 @@ public class ScalableIndicator extends HorizontalScrollView {
             updateTextStyle(textView, i);
         }
         invalidate();
-        G.d("invalidate immediately , current position = %s", currentPosition);
+        LogUtils.d("invalidate immediately , current position = %s", currentPosition);
     }
 
     private void animateTabTitle(int position) {

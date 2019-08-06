@@ -31,13 +31,13 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.ViewAnimator;
 
+import com.wytings.adapter.MyAdapter;
 import com.wytings.special.behavior.TopIndicatorBehavior;
 import com.wytings.special.behavior.TitleLayoutBehavior;
 import com.wytings.special.behavior.BottomPagerViewBehavior;
-import com.wytings.special.util.G;
+import com.wytings.special.util.LogUtils;
 import com.wytings.special.widget.ScalableIndicator;
 
 import java.util.ArrayList;
@@ -65,17 +65,17 @@ public class MainActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             final int currentPosition = viewPager.getCurrentItem();
             if (viewPager.getAdapter() == null) {
-                G.e("ViewPager doesn't have Adapter");
+                LogUtils.e("ViewPager doesn't have Adapter");
                 return;
             }
 
-            G.d("start to loading top in position = %s", currentPosition);
+            LogUtils.d("start to loading top in position = %s", currentPosition);
             if (0 <= currentPosition && currentPosition <= viewPager.getAdapter().getCount()) {
                 viewPager.postDelayed(() ->
                                 LocalBroadcastManager.getInstance(getApplication()).sendBroadcast(new Intent(ACTION_INFO_STOP_LOADING))
                         , 2000);
             } else {
-                G.w("current position = %s is invalid", currentPosition);
+                LogUtils.w("current position = %s is invalid", currentPosition);
             }
         }
     };
@@ -123,7 +123,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-                G.d("onFling, e1.x=%s, e2.x=%s, velocityX = %s, velocityY = %s", e1.getX(), e2.getX(), velocityX, velocityY);
+                LogUtils.d("onFling, e1.x=%s, e2.x=%s, velocityX = %s, velocityY = %s", e1.getX(), e2.getX(), velocityX, velocityY);
                 if (viewPager.getAdapter() == null) {
                     return super.onFling(e1, e2, velocityX, velocityY);
                 }
@@ -224,50 +224,11 @@ public class MainActivity extends AppCompatActivity {
         for (int i = 0; i < 5; i++) {
             RecyclerView recyclerView = new RecyclerView(this);
             recyclerView.setLayoutManager(new LinearLayoutManager(this));
-            recyclerView.setAdapter(new MyAdapter(50));
+            recyclerView.setAdapter(new MyAdapter(this,50));
             recyclerView.setBackgroundColor(ContextCompat.getColor(this, R.color.dark_background_color));
             list.add(recyclerView);
         }
         return list;
-    }
-
-    private class MyAdapter extends RecyclerView.Adapter<MyHolder> {
-
-        private List<String> modelList = new ArrayList<>();
-
-        private MyAdapter(int count) {
-            for (int i = 1; i <= count; i++) {
-                modelList.add(getString(R.string.app_name) + i);
-            }
-        }
-
-        @Override
-        @NonNull
-        public MyHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            return new MyHolder(getLayoutInflater().inflate(android.R.layout.simple_list_item_1, parent, false));
-        }
-
-        @Override
-        public void onBindViewHolder(@NonNull MyHolder holder, int position) {
-            holder.titleText.setText(modelList.get(position));
-        }
-
-        @Override
-        public int getItemCount() {
-            return modelList.size();
-        }
-    }
-
-
-    private class MyHolder extends RecyclerView.ViewHolder {
-
-        final TextView titleText;
-
-        private MyHolder(final View itemView) {
-            super(itemView);
-            this.titleText = itemView.findViewById(android.R.id.text1);
-            this.titleText.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.colorAccent));
-        }
     }
 
     private class Adapter extends PagerAdapter {

@@ -9,19 +9,19 @@ import java.util.Locale;
  * https://github.com/wytings
  */
 
-public final class G {
+public final class LogUtils {
 
     private static final String TAG = "wytings";
 
     public static void d(String msg, Object... args) {
-        Log.d(TAG, String.format(Locale.CHINA, msg, args));
+        Log.d(TAG, "--> " + String.format(Locale.CHINA, msg, args));
     }
 
     public static void w(String msg, Object... args) {
-        Log.w(TAG, String.format(Locale.CHINA, msg, args));
+        Log.w(TAG, "--> " + String.format(Locale.CHINA, msg, args));
     }
 
     public static void e(String msg, Object... args) {
-        Log.e(TAG, String.format(Locale.CHINA, msg, args));
+        Log.e(TAG, "--> " + String.format(Locale.CHINA, msg, args));
     }
 }
