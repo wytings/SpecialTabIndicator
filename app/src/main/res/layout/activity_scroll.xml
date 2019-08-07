@@ -10,10 +10,10 @@
     <FrameLayout
         android:id="@+id/search_layout"
         android:layout_width="match_parent"
-        android:layout_height="220dp"
+        android:layout_height="200dp"
         android:alpha="0.5"
         android:background="@android:color/holo_blue_light"
-        android:tag="min:0;default:100;max:220"
+        android:tag="min:0;default:100;max:200"
         android:visibility="visible"
         app:layout_behavior="com.wytings.scroll.behavior.SearchBehavior"
         tools:visibility="visible">
@@ -32,8 +32,8 @@
         android:id="@+id/swipe_refresh_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:tag="min:0;default:100;max:220"
-        android:translationY="220dp"
+        android:tag="min:0;default:100;max:200;max_enabled:false"
+        android:translationY="200dp"
         app:layout_behavior="com.wytings.scroll.behavior.AnimSupportBehavior">
 
 

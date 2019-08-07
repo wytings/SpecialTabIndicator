@@ -7,6 +7,7 @@ import android.view.View;
 
 import com.wytings.special.R;
 import com.wytings.special.util.ContextUtils;
+import com.wytings.special.util.LogUtils;
 
 /**
  * Created by Rex.Wei on 2019-08-06
@@ -38,12 +39,15 @@ public class SearchBehavior extends CoordinatorLayout.Behavior<View> {
     @Override
     public boolean onDependentViewChanged(CoordinatorLayout parent, View child, View dependency) {
         final int dependencyY = (int) dependency.getTranslationY();
-        if (defaultHeight < dependencyY && dependencyY <= maxHeight) {
+        if (defaultHeight <= dependencyY && dependencyY <= maxHeight) {
             CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams) child.getLayoutParams();
             params.height = dependencyY;
             child.setLayoutParams(params);
+            child.setTranslationY(0);
+            LogUtils.d("search onDependentViewChanged height dependencyY = %s",dependencyY);
         } else {
             child.setTranslationY(-(defaultHeight - dependencyY));
+            LogUtils.d("search onDependentViewChanged translateY dependencyY = %s",dependencyY);
         }
         return true;
     }

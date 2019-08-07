@@ -26,6 +26,7 @@ public class AnimSupportBehavior extends CoordinatorLayout.Behavior<View> {
     private final int minHeight;
     private final int defaultHeight;
     private final int maxHeight;
+    private final boolean isMaxDragEnabled;
 
     private boolean isAutoScrollEnabled = false;
     private boolean isDragging = false;
@@ -34,8 +35,10 @@ public class AnimSupportBehavior extends CoordinatorLayout.Behavior<View> {
         super(context, attrs);
         scroller = new Scroller(context);
         mainHandler = new Handler();
+        final String tag = ContextUtils.getTag(context, attrs);
+        final int[] minDefaultMax = ContextUtils.parseMinDefaultMax(tag);
 
-        final int[] minDefaultMax = ContextUtils.parseMinDefaultMax(context, attrs);
+        isMaxDragEnabled = ContextUtils.isMaxDragEnabled(tag);
         minHeight = ContextUtils.dp(context, minDefaultMax[0]);
         defaultHeight = ContextUtils.dp(context, minDefaultMax[1]);
         maxHeight = ContextUtils.dp(context, minDefaultMax[2]);
@@ -88,7 +91,7 @@ public class AnimSupportBehavior extends CoordinatorLayout.Behavior<View> {
         LogUtils.d("onStopNestedScroll");
         isDragging = false;
         if (scroller.isFinished() && isAutoScrollEnabled) {
-            onAutoScrolling(child, 1000);
+            onAutoScrolling(child, 2000);
         }
     }
 
@@ -119,12 +122,15 @@ public class AnimSupportBehavior extends CoordinatorLayout.Behavior<View> {
             } else {
                 child.setTranslationY(targetY);
             }
-        } else if (child.getTranslationY() < maxHeight) {
-            final int targetY = (int) (child.getTranslationY() - dyUnconsumed * 0.7f);
-            if (targetY >= defaultHeight) {
-                child.setTranslationY(defaultHeight);
-            } else {
-                child.setTranslationY(targetY);
+        } else {
+            if (child.getTranslationY() < maxHeight) {
+                final int targetY = (int) (child.getTranslationY() - dyUnconsumed * 0.7f);
+                final int destY = isMaxDragEnabled ? maxHeight : defaultHeight;
+                if (targetY >= destY) {
+                    child.setTranslationY(destY);
+                } else {
+                    child.setTranslationY(targetY);
+                }
             }
         }
     }
@@ -149,12 +155,12 @@ public class AnimSupportBehavior extends CoordinatorLayout.Behavior<View> {
         // dy>0 to up, dy<0 to down
         if (dy <= 0 || isDragging) {
             if (isDragging && dy < 0) {
-
-                if (child.getTranslationY() < defaultHeight) {
+                final int destY = isMaxDragEnabled ? maxHeight : defaultHeight;
+                if (child.getTranslationY() < destY) {
                     final int targetY = (int) (child.getTranslationY() - dy);
-                    if (targetY > defaultHeight) {
-                        child.setTranslationY(defaultHeight);
-                        consumed[1] = defaultHeight - targetY;
+                    if (targetY > destY) {
+                        child.setTranslationY(destY);
+                        consumed[1] = destY - targetY;
                     } else {
                         child.setTranslationY(targetY);
                         consumed[1] = dy;

@@ -33,6 +33,20 @@ public class ContextUtils {
         return tag;
     }
 
+    public static boolean isMaxDragEnabled(String tag) {
+        final String[] configs = tag.split(";");
+        if (configs.length == 0) {
+            throw new IllegalArgumentException("invalid tag = " + tag);
+        }
+        for (String config : configs) {
+            final String[] values = config.split(":");
+            if ("max_enabled".equals(values[0])) {
+                return Boolean.parseBoolean(values[1]);
+            }
+        }
+        return false;
+    }
+
     public static int[] parseMinDefaultMax(String tag) {
         if (TextUtils.isEmpty(tag)) {
             throw new IllegalArgumentException("android:tag is empty ");
@@ -46,13 +60,13 @@ public class ContextUtils {
         for (String config : configs) {
             final String[] values = config.split(":");
             final String key = values[0];
-            final int value = Integer.parseInt(values[1]);
+            final String value = values[1];
             if ("min".equals(key)) {
-                minDefaultMax[0] = value;
+                minDefaultMax[0] = Integer.parseInt(value);
             } else if ("default".equals(key)) {
-                minDefaultMax[1] = value;
+                minDefaultMax[1] = Integer.parseInt(value);
             } else if ("max".equals(key)) {
-                minDefaultMax[2] = value;
+                minDefaultMax[2] = Integer.parseInt(value);
             }
         }
 
