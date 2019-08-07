@@ -15,7 +15,7 @@
         android:background="@android:color/holo_blue_light"
         android:tag="min:0;default:100;max:200"
         android:visibility="visible"
-        app:layout_behavior="com.wytings.scroll.behavior.SearchBehavior"
+        app:layout_behavior="com.wytings.scroll.behavior.TopLayoutBehavior"
         tools:visibility="visible">
 
         <TextView
@@ -29,12 +29,12 @@
     </FrameLayout>
 
     <android.support.v4.widget.SwipeRefreshLayout
-        android:id="@+id/swipe_refresh_layout"
+        android:id="@+id/behavior_content_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:tag="min:0;default:100;max:200;max_enabled:false"
+        android:tag="min:0;default:100;max:200"
         android:translationY="200dp"
-        app:layout_behavior="com.wytings.scroll.behavior.AnimSupportBehavior">
+        app:layout_behavior="com.wytings.scroll.behavior.BottomLayoutBehavior">
 
 
         <android.support.v7.widget.RecyclerView

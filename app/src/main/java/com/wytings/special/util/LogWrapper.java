@@ -9,7 +9,7 @@ import java.util.Locale;
  * https://github.com/wytings
  */
 
-public final class LogUtils {
+public final class LogWrapper {
 
     private static final String TAG = "wytings";
 

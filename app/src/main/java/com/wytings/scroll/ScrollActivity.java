@@ -23,7 +23,7 @@ public class ScrollActivity extends AppCompatActivity {
         setContentView(R.layout.activity_scroll);
 
 
-        final SwipeRefreshLayout swipeRefreshLayout = findViewById(R.id.swipe_refresh_layout);
+        final SwipeRefreshLayout swipeRefreshLayout = findViewById(R.id.behavior_content_layout);
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {

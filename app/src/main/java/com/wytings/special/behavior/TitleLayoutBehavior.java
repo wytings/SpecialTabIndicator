@@ -19,7 +19,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.wytings.special.R;
-import com.wytings.special.util.LogUtils;
+import com.wytings.special.util.LogWrapper;
 
 /**
  * Created by Rex on 2018/03/07.
@@ -127,7 +127,7 @@ public class TitleLayoutBehavior extends BaseBehavior<View> {
 
                 @Override
                 public void onViewDetachedFromWindow(View v) {
-                    LogUtils.d("progressView  onViewDetachedFromWindow");
+                    LogWrapper.d("progressView  onViewDetachedFromWindow");
                     valueAnimator.cancel();
                     progressView.removeOnAttachStateChangeListener(this);
                     LocalBroadcastManager.getInstance(v.getContext()).unregisterReceiver(stopLoading);

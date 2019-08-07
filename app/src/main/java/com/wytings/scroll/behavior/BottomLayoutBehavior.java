@@ -9,15 +9,14 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.widget.Scroller;
 
-import com.wytings.special.util.ContextUtils;
-import com.wytings.special.util.LogUtils;
+import com.wytings.special.util.LogWrapper;
 
 /**
  * Created by Rex.Wei on 2019-08-06
  *
  * @author weiyuting
  */
-public class AnimSupportBehavior extends CoordinatorLayout.Behavior<View> {
+public class BottomLayoutBehavior extends AbsBehavior<View> {
 
     private static final int MIN_VELOCITY = 800;
     private static final int MAX_VELOCITY = 5000;
@@ -31,17 +30,17 @@ public class AnimSupportBehavior extends CoordinatorLayout.Behavior<View> {
     private boolean isAutoScrollEnabled = false;
     private boolean isDragging = false;
 
-    public AnimSupportBehavior(Context context, AttributeSet attrs) {
+    public BottomLayoutBehavior(Context context, AttributeSet attrs) {
         super(context, attrs);
         scroller = new Scroller(context);
         mainHandler = new Handler();
-        final String tag = ContextUtils.getTag(context, attrs);
-        final int[] minDefaultMax = ContextUtils.parseMinDefaultMax(tag);
+        final String tag = getTag(context, attrs);
+        final int[] minDefaultMax = parseMinDefaultMax(tag);
 
-        isMaxDragEnabled = ContextUtils.isMaxDragEnabled(tag);
-        minHeight = ContextUtils.dp(context, minDefaultMax[0]);
-        defaultHeight = ContextUtils.dp(context, minDefaultMax[1]);
-        maxHeight = ContextUtils.dp(context, minDefaultMax[2]);
+        isMaxDragEnabled = isMaxDragEnabled(tag);
+        minHeight = dp(context, minDefaultMax[0]);
+        defaultHeight = dp(context, minDefaultMax[1]);
+        maxHeight = dp(context, minDefaultMax[2]);
     }
 
     @Override
@@ -64,7 +63,7 @@ public class AnimSupportBehavior extends CoordinatorLayout.Behavior<View> {
                                        int nestedScrollAxes,
                                        int type) {
         final boolean result = type == ViewCompat.TYPE_TOUCH && (nestedScrollAxes & ViewCompat.SCROLL_AXIS_VERTICAL) != 0;
-        LogUtils.d("onStartNestedScroll, child = %s, directTargetChild =%s ,target = %s , result = %s", child, directTargetChild, target, result);
+        LogWrapper.d("onStartNestedScroll, child = %s, directTargetChild =%s ,target = %s , result = %s", child, directTargetChild, target, result);
         return result;
     }
 
@@ -78,7 +77,7 @@ public class AnimSupportBehavior extends CoordinatorLayout.Behavior<View> {
         if (type != ViewCompat.TYPE_TOUCH) {
             return;
         }
-        LogUtils.d("onNestedScrollAccepted");
+        LogWrapper.d("onNestedScrollAccepted");
         scroller.abortAnimation();
         isAutoScrollEnabled = false;
     }
@@ -88,7 +87,7 @@ public class AnimSupportBehavior extends CoordinatorLayout.Behavior<View> {
         if (type != ViewCompat.TYPE_TOUCH) {
             return;
         }
-        LogUtils.d("onStopNestedScroll");
+        LogWrapper.d("onStopNestedScroll");
         isDragging = false;
         if (scroller.isFinished() && isAutoScrollEnabled) {
             onAutoScrolling(child, 2000);
@@ -107,11 +106,11 @@ public class AnimSupportBehavior extends CoordinatorLayout.Behavior<View> {
         if (type != ViewCompat.TYPE_TOUCH) {
             return;
         }
-        LogUtils.d("onNestedScroll, dxConsumed = %s, dyConsumed = %s, dxUnconsumed = %s,dyUnconsumed = %s",
-                   dxConsumed,
-                   dyConsumed,
-                   dxUnconsumed,
-                   dyUnconsumed);
+        LogWrapper.d("onNestedScroll, dxConsumed = %s, dyConsumed = %s, dxUnconsumed = %s,dyUnconsumed = %s",
+                     dxConsumed,
+                     dyConsumed,
+                     dxUnconsumed,
+                     dyUnconsumed);
         // dy>0 to up, dy<0 to down
         isDragging = dyUnconsumed < 0;
 
@@ -148,10 +147,10 @@ public class AnimSupportBehavior extends CoordinatorLayout.Behavior<View> {
             return;
         }
 
-        LogUtils.d("onNestedPreScroll, dx = %s, dy = %s ,isDragging = %s",
-                   dx,
-                   dy,
-                   isDragging);
+        LogWrapper.d("onNestedPreScroll, dx = %s, dy = %s ,isDragging = %s",
+                     dx,
+                     dy,
+                     isDragging);
         // dy>0 to up, dy<0 to down
         if (dy <= 0 || isDragging) {
             if (isDragging && dy < 0) {
@@ -187,7 +186,7 @@ public class AnimSupportBehavior extends CoordinatorLayout.Behavior<View> {
                                     float velocityX,
                                     float velocityY) {
         final boolean result = onAutoScrolling(child, velocityY);
-        LogUtils.d("onNestedPreFling, result = %s , velocityX = %s, velocityY = %s", result, velocityX, velocityY);
+        LogWrapper.d("onNestedPreFling, result = %s , velocityX = %s, velocityY = %s", result, velocityX, velocityY);
         return result;
     }
 

@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <item name="tag_is_auto_scrolling" type="id" />
+    <item name="behavior_content_layout" type="id" />
+    <item name="behavior_view_changed_listener" type="id" />
 </resources>

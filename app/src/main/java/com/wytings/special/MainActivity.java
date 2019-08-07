@@ -37,7 +37,7 @@ import com.wytings.adapter.MyAdapter;
 import com.wytings.special.behavior.TopIndicatorBehavior;
 import com.wytings.special.behavior.TitleLayoutBehavior;
 import com.wytings.special.behavior.BottomPagerViewBehavior;
-import com.wytings.special.util.LogUtils;
+import com.wytings.special.util.LogWrapper;
 import com.wytings.special.widget.ScalableIndicator;
 
 import java.util.ArrayList;
@@ -65,17 +65,17 @@ public class MainActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             final int currentPosition = viewPager.getCurrentItem();
             if (viewPager.getAdapter() == null) {
-                LogUtils.e("ViewPager doesn't have Adapter");
+                LogWrapper.e("ViewPager doesn't have Adapter");
                 return;
             }
 
-            LogUtils.d("start to loading top in position = %s", currentPosition);
+            LogWrapper.d("start to loading top in position = %s", currentPosition);
             if (0 <= currentPosition && currentPosition <= viewPager.getAdapter().getCount()) {
                 viewPager.postDelayed(() ->
                                 LocalBroadcastManager.getInstance(getApplication()).sendBroadcast(new Intent(ACTION_INFO_STOP_LOADING))
                         , 2000);
             } else {
-                LogUtils.w("current position = %s is invalid", currentPosition);
+                LogWrapper.w("current position = %s is invalid", currentPosition);
             }
         }
     };
@@ -123,7 +123,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-                LogUtils.d("onFling, e1.x=%s, e2.x=%s, velocityX = %s, velocityY = %s", e1.getX(), e2.getX(), velocityX, velocityY);
+                LogWrapper.d("onFling, e1.x=%s, e2.x=%s, velocityX = %s, velocityY = %s", e1.getX(), e2.getX(), velocityX, velocityY);
                 if (viewPager.getAdapter() == null) {
                     return super.onFling(e1, e2, velocityX, velocityY);
                 }
