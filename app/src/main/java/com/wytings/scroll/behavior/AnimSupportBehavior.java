@@ -9,7 +9,7 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.widget.Scroller;
 
-import com.wytings.special.R;
+import com.wytings.special.util.ContextUtils;
 import com.wytings.special.util.LogUtils;
 
 /**
@@ -17,44 +17,40 @@ import com.wytings.special.util.LogUtils;
  *
  * @author weiyuting
  */
-public class AnimSupportBehavior extends AbsBehavior<View> {
+public class AnimSupportBehavior extends CoordinatorLayout.Behavior<View> {
 
+    private static final int MIN_VELOCITY = 800;
+    private static final int MAX_VELOCITY = 5000;
     private final Scroller scroller;
     private final Handler mainHandler;
+    private final int minHeight;
+    private final int defaultHeight;
+    private final int maxHeight;
+
     private boolean isAutoScrollEnabled = false;
     private boolean isDragging = false;
-    private final Runnable flingRunnable = new Runnable() {
-        @Override
-        public void run() {
-            if (scroller.computeScrollOffset()) {
-                isDragging = false;
-                setViewParamsHeight(dependentView, scroller.getCurrY());
-                mainHandler.post(this);
-            } else {
-                setAutoScrolling(false);
-            }
-        }
-    };
 
     public AnimSupportBehavior(Context context, AttributeSet attrs) {
-        super(context, attrs, R.id.search_layout);
+        super(context, attrs);
         scroller = new Scroller(context);
         mainHandler = new Handler();
+
+        final int[] minDefaultMax = ContextUtils.parseMinDefaultMax(context, attrs);
+        minHeight = ContextUtils.dp(context, minDefaultMax[0]);
+        defaultHeight = ContextUtils.dp(context, minDefaultMax[1]);
+        maxHeight = ContextUtils.dp(context, minDefaultMax[2]);
     }
 
     @Override
-    public boolean onDependentViewChanged(CoordinatorLayout parent, View child, View dependency) {
-        final int dependencyHeight = getDependencyHeight();
-
-        child.setTranslationY(dependencyHeight);
-
-        if (dependencyHeight == getDependencyCollapseHeight() || dependencyHeight == getDependencyInitHeight()) {
+    public boolean layoutDependsOn(CoordinatorLayout parent, View child, View dependency) {
+        if (parent.getHeight() > 0) {
             CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams) child.getLayoutParams();
-            params.height = parent.getHeight() - dependencyHeight;
-            child.setLayoutParams(params);
+            if (params.height != parent.getHeight() - minHeight) {
+                params.height = parent.getHeight() - minHeight;
+                child.setLayoutParams(params);
+            }
         }
-
-        return true;
+        return super.layoutDependsOn(parent, child, dependency);
     }
 
     @Override
@@ -79,6 +75,7 @@ public class AnimSupportBehavior extends AbsBehavior<View> {
         if (type != ViewCompat.TYPE_TOUCH) {
             return;
         }
+        LogUtils.d("onNestedScrollAccepted");
         scroller.abortAnimation();
         isAutoScrollEnabled = false;
     }
@@ -88,10 +85,10 @@ public class AnimSupportBehavior extends AbsBehavior<View> {
         if (type != ViewCompat.TYPE_TOUCH) {
             return;
         }
+        LogUtils.d("onStopNestedScroll");
         isDragging = false;
-
         if (scroller.isFinished() && isAutoScrollEnabled) {
-            onAutoScrolling(1000);
+            onAutoScrolling(child, 1000);
         }
     }
 
@@ -116,18 +113,19 @@ public class AnimSupportBehavior extends AbsBehavior<View> {
         isDragging = dyUnconsumed < 0;
 
         if (dyUnconsumed > 0) {
-            int newHeight = (int) (getDependencyHeight() - dyUnconsumed * 0.7f);
-            if (newHeight < getDependencyCollapseHeight()) {
-                newHeight = getDependencyCollapseHeight();
+            final int targetY = (int) (minHeight - dyUnconsumed * 0.7f);
+            if (targetY <= minHeight) {
+                child.setTranslationY(minHeight);
+            } else {
+                child.setTranslationY(targetY);
             }
-            setViewParamsHeight(dependentView, newHeight);
-        } else {
-            int newHeight = (int) (getDependencyHeight() - dyUnconsumed * 0.7f);
-
-            if (newHeight > getDependencyInitHeight()) {
-                newHeight = getDependencyInitHeight();
+        } else if (child.getTranslationY() < maxHeight) {
+            final int targetY = (int) (child.getTranslationY() - dyUnconsumed * 0.7f);
+            if (targetY >= defaultHeight) {
+                child.setTranslationY(defaultHeight);
+            } else {
+                child.setTranslationY(targetY);
             }
-            setViewParamsHeight(dependentView, newHeight);
         }
     }
 
@@ -148,33 +146,31 @@ public class AnimSupportBehavior extends AbsBehavior<View> {
                    dx,
                    dy,
                    isDragging);
-
+        // dy>0 to up, dy<0 to down
         if (dy <= 0 || isDragging) {
             if (isDragging && dy < 0) {
-                if (getDependencyHeight() < getDependencyInitHeight()) {
-                    int newHeight = getDependencyHeight() - dy;
-                    if (newHeight > getDependencyInitHeight()) {
-                        newHeight = getDependencyInitHeight();
+
+                if (child.getTranslationY() < defaultHeight) {
+                    final int targetY = (int) (child.getTranslationY() - dy);
+                    if (targetY > defaultHeight) {
+                        child.setTranslationY(defaultHeight);
+                        consumed[1] = defaultHeight - targetY;
+                    } else {
+                        child.setTranslationY(targetY);
+                        consumed[1] = dy;
                     }
-                    setViewParamsHeight(dependentView, newHeight);
-                    consumed[1] = dy;
                 }
             }
             return;
         }
 
-        int newHeight = getDependencyHeight() - dy;
-        // dy>0 up
-        int miniHeight = getDependencyCollapseHeight();
-        if (newHeight >= miniHeight) {
-            setViewParamsHeight(dependentView, newHeight);
+        final int targetY = (int) (child.getTranslationY() - dy);
+        if (targetY >= minHeight) {
+            child.setTranslationY(targetY);
             consumed[1] = dy;
         } else {
-            int gap = miniHeight - getDependencyHeight();
-            if (gap < dy) {
-                setViewParamsHeight(dependentView, miniHeight);
-                consumed[1] = gap;
-            }
+            consumed[1] = (int) (child.getTranslationY() - minHeight);
+            child.setTranslationY(minHeight);
         }
     }
 
@@ -184,27 +180,57 @@ public class AnimSupportBehavior extends AbsBehavior<View> {
                                     @NonNull View target,
                                     float velocityX,
                                     float velocityY) {
-        return onAutoScrolling(Math.abs(velocityY) > 5000 ? 5000 : velocityY);
+        final boolean result = onAutoScrolling(child, velocityY);
+        LogUtils.d("onNestedPreFling, result = %s , velocityX = %s, velocityY = %s", result, velocityX, velocityY);
+        return result;
     }
 
-    private boolean onAutoScrolling(float velocity) {// velocity>0 means dragging down, otherwise dragging up.
-        float currentHeight = getDependencyHeight();
-        if (currentHeight == getDependencyCollapseHeight() || currentHeight == getDependencyInitHeight()) {
+    private float getSuitableVelocity(float velocity) {
+        final float sign = Math.signum(velocity);
+        float absV = Math.abs(velocity);
+        if (absV > MAX_VELOCITY) {
+            absV = MAX_VELOCITY;
+        } else if (absV < MIN_VELOCITY) {
+            absV = MIN_VELOCITY;
+        }
+        return sign * absV;
+    }
+
+    private boolean onAutoScrolling(View child, float velocity) {// velocity<0 means dragging down, velocity>0 dragging up.
+        final int currentY = (int) child.getTranslationY();
+        if (currentY == defaultHeight || currentY == minHeight || currentY == maxHeight) {
             return false;
         }
 
-        if (Math.abs(velocity) <= 800) {
-            velocity = 800;
+        final float suitableVelocity = getSuitableVelocity(velocity);
+        final int targetY;
+        if (suitableVelocity > 0) {
+            targetY = currentY > defaultHeight ? defaultHeight : minHeight;
+        } else {
+            targetY = defaultHeight;
         }
 
-        final boolean willCollapse = currentHeight < (getDependencyInitHeight() + getDependencyCollapseHeight()) / 2;
-
-        float targetHeight = willCollapse ? getDependencyCollapseHeight() : getDependencyInitHeight();
-
-        scroller.startScroll(0, (int) currentHeight, 0, (int) (targetHeight - currentHeight), (int) (1000000 / Math.abs(velocity)));
-        mainHandler.post(flingRunnable);
-        setAutoScrolling(true);
+        scroller.startScroll(0, currentY, 0, targetY - currentY, (int) (1000000 / velocity));
+        mainHandler.post(new FlingRunnable(child));
         return true;
+    }
+
+    private class FlingRunnable implements Runnable {
+
+        private final View child;
+
+        private FlingRunnable(final View child) {
+            this.child = child;
+        }
+
+        @Override
+        public void run() {
+            if (scroller.computeScrollOffset()) {
+                isDragging = false;
+                child.setTranslationY(scroller.getCurrY());
+                mainHandler.post(this);
+            }
+        }
     }
 
 }

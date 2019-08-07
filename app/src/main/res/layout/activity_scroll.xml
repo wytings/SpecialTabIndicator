@@ -11,7 +11,9 @@
         android:id="@+id/search_layout"
         android:layout_width="match_parent"
         android:layout_height="220dp"
+        android:alpha="0.5"
         android:background="@android:color/holo_blue_light"
+        android:tag="min:0;default:100;max:220"
         android:visibility="visible"
         app:layout_behavior="com.wytings.scroll.behavior.SearchBehavior"
         tools:visibility="visible">
@@ -19,14 +21,10 @@
         <TextView
             android:id="@+id/search_edit"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="100dp"
+            android:alpha="0.6"
+            android:background="@android:color/holo_red_light"
             android:hint="@string/app_name" />
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_gravity="bottom"
-            android:background="@android:color/holo_red_dark" />
 
     </FrameLayout>
 
@@ -34,7 +32,9 @@
         android:id="@+id/swipe_refresh_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_behavior="com.wytings.scroll.behavior.PersistSupportBehavior">
+        android:tag="min:0;default:100;max:220"
+        android:translationY="220dp"
+        app:layout_behavior="com.wytings.scroll.behavior.AnimSupportBehavior">
 
 
         <android.support.v7.widget.RecyclerView
