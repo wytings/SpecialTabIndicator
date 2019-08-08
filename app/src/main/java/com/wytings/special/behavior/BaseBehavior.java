@@ -10,7 +10,7 @@ import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.wytings.special.R;
+import com.wytings.R;
 
 import static android.util.TypedValue.COMPLEX_UNIT_DIP;
 

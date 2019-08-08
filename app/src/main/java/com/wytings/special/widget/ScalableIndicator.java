@@ -25,7 +25,7 @@ import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.wytings.special.R;
+import com.wytings.R;
 import com.wytings.special.util.LogWrapper;
 
 import static android.support.v4.view.ViewPager.SCROLL_STATE_DRAGGING;

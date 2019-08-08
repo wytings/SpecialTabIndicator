@@ -5,7 +5,7 @@ import android.support.design.widget.CoordinatorLayout;
 import android.util.AttributeSet;
 import android.view.View;
 
-import com.wytings.special.R;
+import com.wytings.R;
 import com.wytings.special.util.LogWrapper;
 
 /**

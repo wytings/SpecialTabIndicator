@@ -7,8 +7,8 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 
+import com.wytings.R;
 import com.wytings.adapter.MyAdapter;
-import com.wytings.special.R;
 
 /**
  * Created by Rex.Wei on 2019-08-06

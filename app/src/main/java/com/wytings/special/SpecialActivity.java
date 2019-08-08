@@ -33,6 +33,7 @@ import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.ViewAnimator;
 
+import com.wytings.R;
 import com.wytings.adapter.MyAdapter;
 import com.wytings.special.behavior.TopIndicatorBehavior;
 import com.wytings.special.behavior.TitleLayoutBehavior;
@@ -57,7 +58,7 @@ import static com.wytings.special.behavior.BaseBehavior.ACTION_INFO_STOP_LOADING
  * @author wytings@gmail.com
  */
 
-public class MainActivity extends AppCompatActivity {
+public class SpecialActivity extends AppCompatActivity {
 
     private ViewPager viewPager;
     private final BroadcastReceiver loading = new BroadcastReceiver() {
@@ -83,7 +84,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_special);
         transparentStatusBar(this);
 
         viewPager = findViewById(R.id.view_pager);

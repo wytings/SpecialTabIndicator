@@ -18,7 +18,7 @@ import android.view.animation.LinearInterpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.wytings.special.R;
+import com.wytings.R;
 import com.wytings.special.util.LogWrapper;
 
 /**
