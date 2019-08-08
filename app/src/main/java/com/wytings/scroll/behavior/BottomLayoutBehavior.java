@@ -87,7 +87,7 @@ public class BottomLayoutBehavior extends AbsBehavior<View> {
         if (type != ViewCompat.TYPE_TOUCH) {
             return;
         }
-        LogWrapper.d("onStopNestedScroll");
+        LogWrapper.d("onStopNestedScroll - isAutoScrollEnabled = %s, isFinished = %s", isAutoScrollEnabled, scroller.isFinished());
         isDragging = false;
         if (scroller.isFinished() && isAutoScrollEnabled) {
             onAutoScrolling(child, 2000);
@@ -214,7 +214,7 @@ public class BottomLayoutBehavior extends AbsBehavior<View> {
         } else {
             targetY = defaultHeight;
         }
-
+        LogWrapper.d("auto scrolling ,currentY = %s, dy = %s", currentY, targetY - currentY);
         scroller.startScroll(0, currentY, 0, targetY - currentY, (int) (1000000 / velocity));
         mainHandler.post(new FlingRunnable(child));
         return true;
@@ -232,7 +232,12 @@ public class BottomLayoutBehavior extends AbsBehavior<View> {
         public void run() {
             if (scroller.computeScrollOffset()) {
                 isDragging = false;
-                child.setTranslationY(scroller.getCurrY());
+                final int currY = scroller.getCurrY();
+                LogWrapper.d("auto scrolling ,computeScrollOffset, getCurrY = %s", currY);
+                child.setTranslationY(currY);
+                if (child.getParent() instanceof CoordinatorLayout) {
+                    ((CoordinatorLayout) child.getParent()).dispatchDependentViewsChanged(child);
+                }
                 mainHandler.post(this);
             }
         }

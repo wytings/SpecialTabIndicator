@@ -39,16 +39,15 @@ public class TopLayoutBehavior extends AbsBehavior<View> {
     public boolean onDependentViewChanged(CoordinatorLayout parent, View child, View dependency) {
         final int dependencyY = (int) dependency.getTranslationY();
         if (defaultHeight <= dependencyY && dependencyY <= maxHeight) {
-            CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams) child.getLayoutParams();
-            params.height = dependencyY;
-            child.setLayoutParams(params);
+            setViewParamsHeight(child, dependencyY);
             child.setTranslationY(0);
             dispatchViewChangedListener(child);
-            LogWrapper.d("search onDependentViewChanged height dependencyY = %s", dependencyY);
+            LogWrapper.d("search onDependentViewChanged height dependencyY = %s, height = %s", dependencyY, child.getHeight());
         } else {
+            setViewParamsHeight(child, defaultHeight);
             child.setTranslationY(-(defaultHeight - dependencyY));
             dispatchViewChangedListener(child);
-            LogWrapper.d("search onDependentViewChanged translateY dependencyY = %s", dependencyY);
+            LogWrapper.d("search onDependentViewChanged translateY dependencyY = %s , height = %s", dependencyY, child.getHeight());
         }
         return true;
     }

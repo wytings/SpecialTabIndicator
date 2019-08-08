@@ -7,6 +7,7 @@ import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.View;
+import android.view.ViewGroup;
 
 import static android.util.TypedValue.COMPLEX_UNIT_DIP;
 
@@ -46,7 +47,7 @@ public class AbsBehavior<V extends View> extends CoordinatorLayout.Behavior<V> {
     static boolean isMaxDragEnabled(String tag) {
         final String[] configs = tag.split(";");
         if (configs.length == 0) {
-            throw new IllegalArgumentException("invalid tag = " + tag);
+            return true;
         }
         for (String config : configs) {
             final String[] values = config.split(":");
@@ -85,6 +86,20 @@ public class AbsBehavior<V extends View> extends CoordinatorLayout.Behavior<V> {
         }
         return minDefaultMax;
 
+    }
+
+    static void setViewParamsHeight(View view, int height) {
+        final ViewGroup.LayoutParams params = view.getLayoutParams();
+        if (params == null) {
+            return;
+        }
+
+        if (params.height == height) {
+            return;
+        }
+
+        params.height = height;
+        view.setLayoutParams(params);
     }
 
 }
