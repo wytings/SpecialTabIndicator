@@ -32,48 +32,7 @@ public class AppBarActivity extends AppCompatActivity {
         final CoordinatorLayout coordinatorLayout = findViewById(R.id.coordinator_layout);
 
         recyclerView.setAdapter(new MyAdapter(this, 50));
-//        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-//            @Override
-//            public void onScrollStateChanged(final RecyclerView recyclerView, final int newState) {
-//                super.onScrollStateChanged(recyclerView, newState);
-//                LogWrapper.d("onScrollStateChanged, state = %s, height = %s", newState, recyclerView.getHeight());
-//                if (newState == SCROLL_STATE_IDLE) {
-//                    appBarLayout.setExpanded(isScrollingDown, true);
-//                    isScrollingDown = false;
-//                    lastOffset = null;
-//                }
-//            }
-//
-//            @Override
-//            public void onScrolled(final RecyclerView recyclerView, final int dx, final int dy) {
-//                super.onScrolled(recyclerView, dx, dy);
-//                LogWrapper.d("onScrolled, dx = %s, dy =%s, height = %s", dx, dy, recyclerView.getHeight());
-//            }
-//        });
 
-        appBarLayout.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
-
-            @Override
-            public void onOffsetChanged(final AppBarLayout appBarLayout, final int verticalOffset) {
-
-                if (lastOffset == null) {
-                    lastOffset = verticalOffset;
-                }
-
-                isScrollingDown = lastOffset < verticalOffset;
-
-                LogWrapper.d("onOffsetChanged, verticalOffset = %s,isScrollingDown = %s", verticalOffset, isScrollingDown);
-
-            }
-        });
-
-        appBarLayout.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                expand = !expand;
-                appBarLayout.setExpanded(expand,true);
-            }
-        },5000);
 
     }
 }
