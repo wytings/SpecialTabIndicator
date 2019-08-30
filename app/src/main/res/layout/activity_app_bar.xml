@@ -10,6 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@android:color/holo_blue_light"
+        android:tag="collapse:100"
         app:layout_behavior="com.wytings.scroll.behavior.AppBarLayoutBehavior">
 
         <android.support.design.widget.CollapsingToolbarLayout

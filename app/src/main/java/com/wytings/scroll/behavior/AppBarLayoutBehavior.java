@@ -2,10 +2,12 @@ package com.wytings.scroll.behavior;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.support.annotation.NonNull;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.v4.view.ViewCompat;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.View;
@@ -14,15 +16,36 @@ import com.wytings.special.util.LogWrapper;
 
 public class AppBarLayoutBehavior extends AppBarLayout.Behavior {
 
+    private static final String COLLAPSE = "collapse";
+
     private boolean isInFlingMode = false;
     private Boolean willExpanded = null;
     private ValueAnimator valueAnimator;
+    private int collapseOffset;
 
     public AppBarLayoutBehavior() {
     }
 
     public AppBarLayoutBehavior(final Context context, final AttributeSet attrs) {
         super(context, attrs);
+        final int[] arr = new int[]{android.R.attr.tag};
+        final TypedArray typedArray = context.obtainStyledAttributes(attrs, arr);
+        final int tagIndex = typedArray.getIndex(0);
+        final String tag = typedArray.getString(tagIndex);
+        typedArray.recycle();
+        if (!TextUtils.isEmpty(tag)) {
+            String[] keyValues = tag.split(",");
+            for (String keyValue : keyValues) {
+                String[] kv = keyValue.split(":");
+                if (kv.length == 2) {
+                    if (COLLAPSE.equals(kv[0])) {
+                        final int collapseDp = Integer.parseInt(kv[1]);
+                        collapseOffset = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, collapseDp, context.getResources().getDisplayMetrics());
+                    }
+                }
+
+            }
+        }
     }
 
     @Override
@@ -83,9 +106,7 @@ public class AppBarLayoutBehavior extends AppBarLayout.Behavior {
 
 
     private void dispatchAnimation(final AppBarLayout appBarLayout, final boolean expanded) {
-        final Context context = appBarLayout.getContext();
         final int defaultOffset = 0;
-        final int collapseOffset = getMinHeight(context) - getMaxHeight(context);
         final int currentOffset = getTopAndBottomOffset();
 
         if (currentOffset == collapseOffset || currentOffset == defaultOffset) {
@@ -97,9 +118,7 @@ public class AppBarLayoutBehavior extends AppBarLayout.Behavior {
     }
 
     private void animateAppBar(final CoordinatorLayout coordinatorLayout, final AppBarLayout appBarLayout, boolean isExpand) {
-        final Context context = appBarLayout.getContext();
         final int defaultOffset = 0;
-        final int collapseOffset = getMinHeight(context) - getMaxHeight(context);
         final int currentOffset = getTopAndBottomOffset();
 
         if (isExpand) {
@@ -119,14 +138,6 @@ public class AppBarLayoutBehavior extends AppBarLayout.Behavior {
         });
         valueAnimator.start();
 
-    }
-
-    private int getMinHeight(Context context) {
-        return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 100, context.getResources().getDisplayMetrics());
-    }
-
-    private int getMaxHeight(Context context) {
-        return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 300, context.getResources().getDisplayMetrics());
     }
 
 }
