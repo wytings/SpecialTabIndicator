@@ -18,10 +18,6 @@ import com.wytings.special.util.LogWrapper;
  */
 public class AppBarActivity extends AppCompatActivity {
 
-    private boolean isScrollingDown = false;
-    private Integer lastOffset = null;
-    private static boolean expand = true;
-
     @Override
     protected void onCreate(@Nullable final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -33,6 +29,12 @@ public class AppBarActivity extends AppCompatActivity {
 
         recyclerView.setAdapter(new MyAdapter(this, 50));
 
+        appBarLayout.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
+            @Override
+            public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
+                LogWrapper.d("AppBarActivity onOffsetChanged verticalOffset = %s", verticalOffset);
+            }
+        });
 
     }
 }
