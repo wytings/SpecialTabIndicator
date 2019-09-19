@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.wytings.R;
+import com.wytings.special.util.LogWrapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +39,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyHolder> {
     @Override
     public void onBindViewHolder(@NonNull MyHolder holder, int position) {
         holder.titleText.setText(modelList.get(position));
+        //LogWrapper.d("MyAdapter - onBindViewHolder " + holder.titleText.getText());
     }
 
     @Override
@@ -53,6 +55,12 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyHolder> {
             super(itemView);
             this.titleText = itemView.findViewById(android.R.id.text1);
             this.titleText.setTextColor(ContextCompat.getColor(itemView.getContext(), R.color.colorAccent));
+            itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(final View v) {
+                    LogWrapper.d("MyAdapter - " + titleText.getText());
+                }
+            });
         }
     }
 }

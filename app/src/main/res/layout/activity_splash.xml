@@ -11,18 +11,28 @@
         android:id="@+id/special"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="special" />
+        android:text="Special"
+        android:textAllCaps="false" />
 
     <Button
         android:id="@+id/scroll"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="scroll" />
+        android:text="Scroll"
+        android:textAllCaps="false" />
 
     <Button
         android:id="@+id/app_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="AppBar" />
+        android:text="AppBar"
+        android:textAllCaps="false" />
+
+    <Button
+        android:id="@+id/refresh"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Refresh"
+        android:textAllCaps="false" />
 
 </LinearLayout>
