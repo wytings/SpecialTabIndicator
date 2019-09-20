@@ -3,7 +3,6 @@ package com.wytings.refresh;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
-import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 
@@ -22,8 +21,8 @@ public class RefreshActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_refresh);
 
-        final SwipeRefreshLayout swipeRefreshLayout = findViewById(R.id.behavior_content_layout);
-        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+        final SuperSwipeRefreshLayout swipeRefreshLayout = findViewById(R.id.behavior_content_layout);
+        swipeRefreshLayout.setOnRefreshListener(new SuperSwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
                 new Handler().postDelayed(new Runnable() {

@@ -24,7 +24,8 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'com.android.support:appcompat-v7:27.1.0'
-    implementation 'com.android.support:design:27.1.0'
-    implementation 'com.android.support:recyclerview-v7:27.1.0'
+    def version = '27.1.1'
+    implementation "com.android.support:appcompat-v7:$version"
+    implementation "com.android.support:design:$version"
+    implementation "com.android.support:recyclerview-v7:$version"
 }
