@@ -28,6 +28,7 @@ import android.view.animation.Animation.AnimationListener;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Transformation;
 import android.widget.AbsListView;
+import android.widget.ImageView;
 import android.widget.ListView;
 
 /**
@@ -129,7 +130,6 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
             android.R.attr.enabled
     };
 
-    CircleImageView mCircleView;
     private int mCircleViewIndex = -1;
 
     protected int mFrom;
@@ -139,8 +139,6 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
     protected int mOriginalOffsetTop;
 
     int mSpinnerOffsetEnd;
-
-    CircularProgressDrawable mProgress;
 
     private Animation mScaleAnimation;
 
@@ -371,7 +369,8 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
     }
 
     private void createProgressView() {
-        mCircleView = new CircleImageView(getContext(), CIRCLE_BG_LIGHT);
+        mCircleView = new ImageView(getContext());
+        mCircleView.setBackgroundColor(CIRCLE_BG_LIGHT);
         mProgress = new CircularProgressDrawable(getContext());
         mProgress.setStyle(CircularProgressDrawable.DEFAULT);
         mCircleView.setImageDrawable(mProgress);
@@ -422,7 +421,7 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
         };
         mScaleAnimation.setDuration(mMediumAnimationDuration);
         if (listener != null) {
-            mCircleView.setAnimationListener(listener);
+            // mCircleView.setAnimationListener(listener);
         }
         mCircleView.clearAnimation();
         mCircleView.startAnimation(mScaleAnimation);
@@ -459,7 +458,7 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
             }
         };
         mScaleDownAnimation.setDuration(SCALE_DOWN_DURATION);
-        mCircleView.setAnimationListener(listener);
+        // mCircleView.setAnimationListener(listener);
         mCircleView.clearAnimation();
         mCircleView.startAnimation(mScaleDownAnimation);
     }
@@ -482,7 +481,7 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
         };
         alpha.setDuration(ALPHA_ANIMATION_DURATION);
         // Clear out the previous animation listeners.
-        mCircleView.setAnimationListener(null);
+        //  mCircleView.setAnimationListener(null);
         mCircleView.clearAnimation();
         mCircleView.startAnimation(alpha);
         return alpha;
@@ -1072,7 +1071,7 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
         mAnimateToCorrectPosition.setDuration(ANIMATE_TO_TRIGGER_DURATION);
         mAnimateToCorrectPosition.setInterpolator(mDecelerateInterpolator);
         if (listener != null) {
-            mCircleView.setAnimationListener(listener);
+            // mCircleView.setAnimationListener(listener);
         }
         mCircleView.clearAnimation();
         mCircleView.startAnimation(mAnimateToCorrectPosition);
@@ -1088,7 +1087,7 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
             mAnimateToStartPosition.setDuration(ANIMATE_TO_START_DURATION);
             mAnimateToStartPosition.setInterpolator(mDecelerateInterpolator);
             if (listener != null) {
-                mCircleView.setAnimationListener(listener);
+                // mCircleView.setAnimationListener(listener);
             }
             mCircleView.clearAnimation();
             mCircleView.startAnimation(mAnimateToStartPosition);
@@ -1140,7 +1139,7 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
         };
         mScaleDownToStartAnimation.setDuration(SCALE_DOWN_DURATION);
         if (listener != null) {
-            mCircleView.setAnimationListener(listener);
+            // mCircleView.setAnimationListener(listener);
         }
         mCircleView.clearAnimation();
         mCircleView.startAnimation(mScaleDownToStartAnimation);
@@ -1188,7 +1187,7 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
          *
          * @return Whether it is possible for the child view of parent layout to scroll up.
          */
-        boolean canChildScrollUp(@NonNull android.support.v4.widget.SwipeRefreshLayout parent, @Nullable View child);
+        boolean canChildScrollUp(@NonNull SuperSwipeRefreshLayout parent, @Nullable View child);
     }
 }
 
