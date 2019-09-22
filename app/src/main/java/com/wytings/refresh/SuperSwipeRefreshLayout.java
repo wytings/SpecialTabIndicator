@@ -22,7 +22,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.AbsListView;
 import android.widget.ListView;
@@ -44,17 +43,8 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
 
     private static final float DECELERATE_INTERPOLATION_FACTOR = 2f;
     private static final int INVALID_POINTER = -1;
-    private static final float DRAG_RATE = .5f;
 
-    /**
-     * Max amount of circle that can be filled by progress during swipe gesture,
-     * where 1.0 is a full circle
-     */
     private static final int ANIMATE_TO_TRIGGER_DURATION = 200;
-
-    private static final int ANIMATE_TO_START_DURATION = 200;
-
-    private static final int SCALE_DOWN_DURATION = 150;
 
     /**
      * Default offset in dips from the top of the view to where the progress spinner should stop
@@ -69,7 +59,7 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
     OnRefreshListener mListener;
     boolean mRefreshing = false;
     private final int mTouchSlop;
-    private int mTotalDragDistance = -1;
+    private int mTriggerRefreshDistance;
 
     private final NestedScrollingParentHelper mNestedScrollingParentHelper;
     private final NestedScrollingChildHelper mNestedScrollingChildHelper;
@@ -87,8 +77,6 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
     private static final int[] LAYOUT_ATTRS = new int[]{
             android.R.attr.enabled
     };
-
-    boolean mNotify;
 
     private OnChildScrollUpCallback mChildScrollUpCallback;
 
@@ -119,7 +107,7 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
 
         final DisplayMetrics metrics = getResources().getDisplayMetrics();
 
-        mTotalDragDistance = (int) (DEFAULT_CIRCLE_TARGET * metrics.density);
+        mTriggerRefreshDistance = (int) (DEFAULT_CIRCLE_TARGET * metrics.density);
         mNestedScrollingParentHelper = new NestedScrollingParentHelper(this);
         mNestedScrollingChildHelper = new NestedScrollingChildHelper(this);
         setNestedScrollingEnabled(true);
@@ -152,18 +140,6 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
         reset();
     }
 
-    void dispatchAnimationEnd() {
-        if (mRefreshing) {
-            if (mNotify) {
-                if (mListener != null) {
-                    mListener.onRefresh();
-                }
-            }
-        } else {
-            reset();
-        }
-    }
-
     /**
      * Set the listener to be notified when a refresh is triggered via the swipe
      * gesture.
@@ -178,26 +154,31 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
      *
      * @param refreshing Whether or not the view should show refresh progress.
      */
-    public void setRefreshing(boolean refreshing) {
-        if (refreshing && mRefreshing != refreshing) {
-            // scale and show
-            mRefreshing = refreshing;
-            mNotify = false;
-            animateOffsetToCorrectPosition();
-        } else {
-            setRefreshing(refreshing, false);
-        }
+    public void setRefreshing(final boolean refreshing) {
+        setRefreshing(refreshing, true);
     }
 
-    private void setRefreshing(boolean refreshing, final boolean notify) {
-        if (mRefreshing != refreshing) {
-            mNotify = notify;
+    /**
+     * Notify the widget that refresh state has changed. Do not call this when
+     * refresh is triggered by a swipe gesture.
+     *
+     * @param refreshing        Whether or not the view should show refresh progress.
+     * @param notifySateChanged Whether or not it updates refreshing state.
+     */
+    public void setRefreshing(final boolean refreshing, final boolean notifySateChanged) {
+        if (notifySateChanged && mRefreshing != refreshing) {
             mRefreshing = refreshing;
-            if (mRefreshing) {
-                animateOffsetToCorrectPosition();
-            } else {
-                animateOffsetToStartPosition();
+            if (refreshing) {
+                if (mListener != null) {
+                    mListener.onRefresh();
+                }
             }
+        }
+
+        if (refreshing) {
+            animateOffsetToCorrectPosition();
+        } else {
+            animateOffsetToStartPosition();
         }
     }
 
@@ -288,9 +269,9 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
         if (!isEnabled() || canChildScrollUp() || mNestedScrollInProgress) {
             // Fail fast if we're not in a state where a swipe is possible
             LogWrapper.d("onInterceptTouchEvent , canChildScrollUp = %s,mRefreshing = %s, mNestedScrollInProgress = %s ",
-                         canChildScrollUp(),
-                         mRefreshing,
-                         mNestedScrollInProgress);
+                    canChildScrollUp(),
+                    mRefreshing,
+                    mNestedScrollInProgress);
             return false;
         }
 
@@ -298,7 +279,6 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
             case MotionEvent.ACTION_DOWN:
                 mActivePointerId = ev.getPointerId(0);
                 mIsBeingDragged = false;
-
                 pointerIndex = ev.findPointerIndex(mActivePointerId);
                 if (pointerIndex < 0) {
                     return false;
@@ -347,9 +327,9 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
         if (!isEnabled() || canChildScrollUp() || mNestedScrollInProgress) {
             // Fail fast if we're not in a state where a swipe is possible
             LogWrapper.d("onTouchEvent , isEnabled = %s, canChildScrollUp = %s, mNestedScrollInProgress = %s",
-                         isEnabled(),
-                         canChildScrollUp(),
-                         mNestedScrollInProgress);
+                    isEnabled(),
+                    canChildScrollUp(),
+                    mNestedScrollInProgress);
             return false;
         }
 
@@ -380,7 +360,7 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
                 pointerIndex = ev.getActionIndex();
                 if (pointerIndex < 0) {
                     Log.e(LOG_TAG,
-                          "Got ACTION_POINTER_DOWN event but have an invalid action index.");
+                            "Got ACTION_POINTER_DOWN event but have an invalid action index.");
                     return false;
                 }
                 mActivePointerId = ev.getPointerId(pointerIndex);
@@ -488,10 +468,10 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
         final int dy = dyUnconsumed + mParentOffsetInWindow[1];
 
         LogWrapper.d("onNestedScroll, dyConsumed = %s, dyUnconsumed = %s, dy = %s, canChildScrollUp = %s",
-                     dyConsumed,
-                     dyUnconsumed,
-                     dy,
-                     canChildScrollUp());
+                dyConsumed,
+                dyUnconsumed,
+                dy,
+                canChildScrollUp());
 
         if (dy < 0 && !canChildScrollUp()) {
             moveSpinner(Math.abs(dy));
@@ -576,10 +556,6 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
         return mNestedScrollingChildHelper.dispatchNestedPreFling(velocityX, velocityY);
     }
 
-    private boolean isAnimationRunning(Animation animation) {
-        return animation != null && animation.hasStarted() && !animation.hasEnded();
-    }
-
     private void startDragging(float y) {
         if (mInitialDownY < 0) {
             mInitialDownY = y - mTouchSlop - 1; // 如果事件被中断，则假装偏移
@@ -599,6 +575,7 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
     }
 
     private boolean moveSpinner(int offset) {
+        LogWrapper.d("moveSpinner");
         if (offset > 0) {
             setTargetTopAndBottomOffset((int) (offset * 0.6f));
             return true;
@@ -620,14 +597,12 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
     }
 
     private void finishSpinner() {
-        LogWrapper.d("finishSpinner,top = %s, mTotalDragDistance = %s", getTargetView().getTop(), mTotalDragDistance);
+        LogWrapper.d("finishSpinner,top = %s, mTriggerRefreshDistance = %s", getTargetView().getTop(), mTriggerRefreshDistance);
 
-        if (getTargetView().getTop() > mTotalDragDistance) {
+        if (getTargetView().getTop() > mTriggerRefreshDistance) {
             setRefreshing(true, true);
         } else {
-            // cancel refresh
-            mRefreshing = false;
-            animateOffsetToStartPosition();
+            setRefreshing(false, false);
         }
     }
 
@@ -639,14 +614,13 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
             mToCorrectPositionAnimator.cancel();
         }
 
-        final ValueAnimator valueAnimator = ValueAnimator.ofInt(startOffset, mTotalDragDistance);
+        final ValueAnimator valueAnimator = ValueAnimator.ofInt(startOffset, mTriggerRefreshDistance);
         valueAnimator.setInterpolator(mDecelerateInterpolator);
         valueAnimator.setDuration(ANIMATE_TO_TRIGGER_DURATION);
         valueAnimator.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(final Animator animation) {
                 super.onAnimationEnd(animation);
-                dispatchAnimationEnd();
             }
         });
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -677,7 +651,7 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
             @Override
             public void onAnimationEnd(final Animator animation) {
                 super.onAnimationEnd(animation);
-                dispatchAnimationEnd();
+                reset();
             }
         });
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -736,7 +710,6 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
          *
          * @param parent SwipeRefreshLayout that this callback is overriding.
          * @param child  The child view of SwipeRefreshLayout.
-         *
          * @return Whether it is possible for the child view of parent layout to scroll up.
          */
         boolean canChildScrollUp(@NonNull SuperSwipeRefreshLayout parent, @Nullable View child);
