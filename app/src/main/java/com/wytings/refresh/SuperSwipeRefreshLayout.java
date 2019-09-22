@@ -46,15 +46,14 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
 
     private static final int ANIMATE_TO_TRIGGER_DURATION = 200;
 
-    /**
-     * Default offset in dips from the top of the view to where the progress spinner should stop
-     */
-    private static final int DEFAULT_CIRCLE_TARGET = 64;
+    private static final int DEFAULT_TRIGGER_DISTANCE = 128;
 
     /**
      * the target of the gesture
      */
     private View mTarget;
+
+    private final RefreshHeaderLayout refreshHeader;
 
     OnRefreshListener mListener;
     boolean mRefreshing = false;
@@ -107,7 +106,7 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
 
         final DisplayMetrics metrics = getResources().getDisplayMetrics();
 
-        mTriggerRefreshDistance = (int) (DEFAULT_CIRCLE_TARGET * metrics.density);
+        mTriggerRefreshDistance = (int) (DEFAULT_TRIGGER_DISTANCE * metrics.density);
         mNestedScrollingParentHelper = new NestedScrollingParentHelper(this);
         mNestedScrollingChildHelper = new NestedScrollingChildHelper(this);
         setNestedScrollingEnabled(true);
@@ -115,6 +114,10 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
         final TypedArray a = context.obtainStyledAttributes(attrs, LAYOUT_ATTRS);
         setEnabled(a.getBoolean(0, true));
         a.recycle();
+
+        refreshHeader = new RefreshHeaderLayout(context);
+        addView(refreshHeader);
+
     }
 
     void reset() {
@@ -122,6 +125,7 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
         mIsBeingDragged = false;
         mNestedScrollInProgress = false;
         mInitialDownY = -1;
+        refreshHeader.dispatchReset(this);
 
         LogWrapper.d("reset");
     }
@@ -172,7 +176,18 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
                 if (mListener != null) {
                     mListener.onRefresh();
                 }
+                refreshHeader.dispatchRefreshing(this);
+            } else {
+                refreshHeader.dispatchRefreshCancel(this, new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        super.onAnimationEnd(animation);
+                        animateOffsetToStartPosition();
+                    }
+                });
+                return;
             }
+
         }
 
         if (refreshing) {
@@ -194,7 +209,7 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
         if (mTarget == null) {
             for (int i = 0; i < getChildCount(); i++) {
                 View child = getChildAt(i);
-                if (child != null) {
+                if (child != refreshHeader) {
                     mTarget = child;
                     break;
                 }
@@ -212,12 +227,15 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
             return;
         }
 
-        final View child = getTargetView();
-        final int childLeft = getPaddingLeft();
-        final int childTop = getPaddingTop();
-        final int childWidth = width - getPaddingLeft() - getPaddingRight();
-        final int childHeight = height - getPaddingTop() - getPaddingBottom();
-        child.layout(childLeft, childTop, childLeft + childWidth, childTop + childHeight);
+        final View target = getTargetView();
+        final int targetLeft = getPaddingLeft();
+        final int targetTop = getPaddingTop();
+        final int targetWidth = width - getPaddingLeft() - getPaddingRight();
+        final int targetHeight = height - getPaddingTop() - getPaddingBottom();
+        target.layout(targetLeft, targetTop, targetLeft + targetWidth, targetTop + targetHeight);
+
+        refreshHeader.layout(targetLeft, targetTop - refreshHeader.getMeasuredHeight(), targetLeft + targetWidth, targetTop);
+
     }
 
     @Override
@@ -233,6 +251,10 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
         final int targetWidthMeasureSpec = makeMeasureSpec(width, MeasureSpec.EXACTLY);
         final int targetHeightMeasureSpec = makeMeasureSpec(height, MeasureSpec.EXACTLY);
         getTargetView().measure(targetWidthMeasureSpec, targetHeightMeasureSpec);
+
+        final int headerWidthMeasureSpec = makeMeasureSpec(width, MeasureSpec.EXACTLY);
+        final int headerHeightMeasureSpec = makeMeasureSpec(mTriggerRefreshDistance, MeasureSpec.EXACTLY);
+        refreshHeader.measure(headerWidthMeasureSpec, headerHeightMeasureSpec);
     }
 
     /**
@@ -673,7 +695,7 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
             LogWrapper.d("setTargetTopAndBottomOffset , offset = %s, top = %s", offset, target.getTop());
 
             if (offset > 0 && target.getTop() > mTriggerRefreshDistance) {
-                if (target.getTop() > mTriggerRefreshDistance * 1.75f) {
+                if (target.getTop() > mTriggerRefreshDistance * 2) {
                     offset *= 0.2f;
                 } else {
                     offset *= 0.5f;
@@ -681,6 +703,8 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
             }
 
             ViewCompat.offsetTopAndBottom(target, offset);
+            refreshHeader.dispatchTopAndBottomOffset(this, offset);
+
         } else {
             LogWrapper.d("setTargetTopDistance ,mTarget is null, offset = %s", offset);
         }
