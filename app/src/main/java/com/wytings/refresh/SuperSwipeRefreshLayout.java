@@ -671,6 +671,15 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
         final View target = getTargetView();
         if (target != null) {
             LogWrapper.d("setTargetTopAndBottomOffset , offset = %s, top = %s", offset, target.getTop());
+
+            if (offset > 0 && target.getTop() > mTriggerRefreshDistance) {
+                if (target.getTop() > mTriggerRefreshDistance * 1.75f) {
+                    offset *= 0.2f;
+                } else {
+                    offset *= 0.5f;
+                }
+            }
+
             ViewCompat.offsetTopAndBottom(target, offset);
         } else {
             LogWrapper.d("setTargetTopDistance ,mTarget is null, offset = %s", offset);
