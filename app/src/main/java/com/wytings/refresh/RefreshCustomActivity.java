@@ -27,6 +27,14 @@ public class RefreshCustomActivity extends AppCompatActivity {
 
         final SuperSwipeRefreshLayout swipeRefreshLayout = findViewById(R.id.behavior_content_layout);
         swipeRefreshLayout.setRefreshing(true);
+
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                swipeRefreshLayout.setRefreshing(false);
+            }
+        }, 5000);
+
         swipeRefreshLayout.setOnRefreshListener(new SuperSwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
