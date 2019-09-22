@@ -70,14 +70,7 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
     boolean mRefreshing = false;
     private final int mTouchSlop;
     private int mTotalDragDistance = -1;
-    private final int mMediumAnimationDuration;
 
-    /**
-     * If nested scrolling is enabled, the total amount that needed to be
-     * consumed by this as the nested scrolling parent is used in place of the
-     * overscroll determined by MOVE events in the onTouch handler
-     */
-    private float mTotalUnconsumed;
     private final NestedScrollingParentHelper mNestedScrollingParentHelper;
     private final NestedScrollingChildHelper mNestedScrollingChildHelper;
     private final int[] mParentScrollConsumed = new int[2];
@@ -85,7 +78,8 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
     private boolean mNestedScrollInProgress;
 
     private float mInitialMotionY;
-    private float mInitialDownY;
+    private float mInitialDownY = -1;
+    private float mLastMotionY;
     private boolean mIsBeingDragged;
     private int mActivePointerId = INVALID_POINTER;
 
@@ -100,8 +94,6 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
 
     private ValueAnimator mToCorrectPositionAnimator = null;
     private ValueAnimator mToStartPositionAnimator = null;
-    private ValueAnimator mStartRefreshAnimator = null;
-    private ValueAnimator mFinishRefreshAnimator = null;
 
     /**
      * Simple constructor to use when creating a SwipeRefreshLayout from code.
@@ -123,7 +115,6 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
         setWillNotDraw(false);
 
         mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
-        mMediumAnimationDuration = getResources().getInteger(android.R.integer.config_mediumAnimTime);
         mDecelerateInterpolator = new DecelerateInterpolator(DECELERATE_INTERPOLATION_FACTOR);
 
         final DisplayMetrics metrics = getResources().getDisplayMetrics();
@@ -139,7 +130,12 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
     }
 
     void reset() {
-        setTargetTopDistance(0);
+        setTargetTopAndBottomOffset(-getTargetView().getTop());
+        mIsBeingDragged = false;
+        mNestedScrollInProgress = false;
+        mInitialDownY = -1;
+
+        LogWrapper.d("reset");
     }
 
     @Override
@@ -187,40 +183,10 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
             // scale and show
             mRefreshing = refreshing;
             mNotify = false;
-            startScaleUpAnimation();
+            animateOffsetToCorrectPosition();
         } else {
             setRefreshing(refreshing, false);
         }
-    }
-
-    private void startScaleUpAnimation() {
-        // 0 -> 1, enlarge circle size animation
-        LogWrapper.d("startScaleUpAnimation ");
-
-        if (mStartRefreshAnimator != null) {
-            mStartRefreshAnimator.cancel();
-        }
-
-        final ValueAnimator valueAnimator = ValueAnimator.ofInt(0, mTotalDragDistance);
-        valueAnimator.setDuration(mMediumAnimationDuration);
-        valueAnimator.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationEnd(final Animator animation) {
-                super.onAnimationEnd(animation);
-                dispatchAnimationEnd();
-            }
-        });
-        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(final ValueAnimator animation) {
-                final int current = (int) animation.getAnimatedValue();
-                setTargetTopDistance(current);
-            }
-        });
-
-        valueAnimator.start();
-        mStartRefreshAnimator = valueAnimator;
-
     }
 
     private void setRefreshing(boolean refreshing, final boolean notify) {
@@ -230,40 +196,9 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
             if (mRefreshing) {
                 animateOffsetToCorrectPosition();
             } else {
-                startScaleDownAnimation();
+                animateOffsetToStartPosition();
             }
         }
-    }
-
-    void startScaleDownAnimation() {
-        // 1 -> 0, reduce circle size animation
-
-        final int startOffset = getTargetView().getTop();
-        LogWrapper.d("startScaleDownAnimation, startOffset = %s", startOffset);
-
-        if (mFinishRefreshAnimator != null) {
-            mFinishRefreshAnimator.cancel();
-        }
-
-        final ValueAnimator valueAnimator = ValueAnimator.ofInt(startOffset, 0);
-        valueAnimator.setDuration(SCALE_DOWN_DURATION);
-        valueAnimator.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationEnd(final Animator animation) {
-                super.onAnimationEnd(animation);
-                dispatchAnimationEnd();
-            }
-        });
-        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(final ValueAnimator animation) {
-                final int current = (int) animation.getAnimatedValue();
-                setTargetTopDistance(current);
-            }
-        });
-
-        valueAnimator.start();
-        mFinishRefreshAnimator = valueAnimator;
     }
 
     /**
@@ -350,7 +285,7 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
         final int action = ev.getActionMasked();
         int pointerIndex;
 
-        if (!isEnabled() || canChildScrollUp() || mRefreshing || mNestedScrollInProgress) {
+        if (!isEnabled() || canChildScrollUp() || mNestedScrollInProgress) {
             // Fail fast if we're not in a state where a swipe is possible
             LogWrapper.d("onInterceptTouchEvent , canChildScrollUp = %s,mRefreshing = %s, mNestedScrollInProgress = %s ",
                          canChildScrollUp(),
@@ -361,7 +296,6 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
 
         switch (action) {
             case MotionEvent.ACTION_DOWN:
-                setTargetTopDistance(0);
                 mActivePointerId = ev.getPointerId(0);
                 mIsBeingDragged = false;
 
@@ -380,10 +314,12 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
 
                 pointerIndex = ev.findPointerIndex(mActivePointerId);
                 if (pointerIndex < 0) {
+                    LogWrapper.d("onInterceptTouchEvent ACTION_MOVE - pointerIndex = %s", pointerIndex);
                     return false;
                 }
                 final float y = ev.getY(pointerIndex);
                 startDragging(y);
+                LogWrapper.d("onInterceptTouchEvent ACTION_MOVE - mIsBeingDragged - %s", mIsBeingDragged);
                 break;
 
             case MotionEvent.ACTION_POINTER_UP:
@@ -400,6 +336,82 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
         }
 
         return mIsBeingDragged;
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    @Override
+    public boolean onTouchEvent(MotionEvent ev) {
+        final int action = ev.getActionMasked();
+        int pointerIndex;
+        LogWrapper.d("onTouchEvent , MotionEvent = %s,mIsBeingDragged = %s", MotionEvent.actionToString(ev.getAction()), mIsBeingDragged);
+        if (!isEnabled() || canChildScrollUp() || mNestedScrollInProgress) {
+            // Fail fast if we're not in a state where a swipe is possible
+            LogWrapper.d("onTouchEvent , isEnabled = %s, canChildScrollUp = %s, mNestedScrollInProgress = %s",
+                         isEnabled(),
+                         canChildScrollUp(),
+                         mNestedScrollInProgress);
+            return false;
+        }
+
+        switch (action) {
+            case MotionEvent.ACTION_DOWN:
+                mActivePointerId = ev.getPointerId(0);
+                mIsBeingDragged = false;
+                break;
+
+            case MotionEvent.ACTION_MOVE: {
+                pointerIndex = ev.findPointerIndex(mActivePointerId);
+                if (pointerIndex < 0) {
+                    Log.e(LOG_TAG, "Got ACTION_MOVE event but have an invalid active pointer id.");
+                    return false;
+                }
+
+                final float y = ev.getY(pointerIndex);
+                startDragging(y);
+
+                if (mIsBeingDragged) {
+                    final int offset = (int) (y - mLastMotionY);
+                    mLastMotionY = y;
+                    return moveSpinner(offset);
+                }
+                break;
+            }
+            case MotionEvent.ACTION_POINTER_DOWN: {
+                pointerIndex = ev.getActionIndex();
+                if (pointerIndex < 0) {
+                    Log.e(LOG_TAG,
+                          "Got ACTION_POINTER_DOWN event but have an invalid action index.");
+                    return false;
+                }
+                mActivePointerId = ev.getPointerId(pointerIndex);
+                break;
+            }
+
+            case MotionEvent.ACTION_POINTER_UP:
+                onSecondaryPointerUp(ev);
+                break;
+
+            case MotionEvent.ACTION_UP: {
+                pointerIndex = ev.findPointerIndex(mActivePointerId);
+                if (pointerIndex < 0) {
+                    Log.e(LOG_TAG, "Got ACTION_UP event but don't have an active pointer id.");
+                    return false;
+                }
+
+                if (mIsBeingDragged) {
+                    mIsBeingDragged = false;
+                    finishSpinner();
+                }
+                mActivePointerId = INVALID_POINTER;
+                return false;
+            }
+            case MotionEvent.ACTION_CANCEL:
+                return false;
+            default:
+                return true;
+        }
+
+        return true;
     }
 
     @Override
@@ -422,7 +434,8 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
      */
     @Override
     public boolean onStartNestedScroll(@NonNull View child, @NonNull View target, int nestedScrollAxes) {
-        return isEnabled() && !mRefreshing && (nestedScrollAxes & ViewCompat.SCROLL_AXIS_VERTICAL) != 0;
+
+        return isEnabled() && (getTargetView().getTop() >= 0) && (nestedScrollAxes & ViewCompat.SCROLL_AXIS_VERTICAL) != 0;
     }
 
     @Override
@@ -431,23 +444,23 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
         mNestedScrollingParentHelper.onNestedScrollAccepted(child, target, axes);
         // Dispatch up to the nested parent
         startNestedScroll(axes & ViewCompat.SCROLL_AXIS_VERTICAL);
-        mTotalUnconsumed = 0;
         mNestedScrollInProgress = true;
     }
 
     @Override
     public void onNestedPreScroll(@NonNull View target, int dx, int dy, @NonNull int[] consumed) {
-        // If we are in the middle of consuming, a scroll, then we want to move the spinner back up
-        // before allowing the list to scroll
-        if (dy > 0 && mTotalUnconsumed > 0) {
-            if (dy > mTotalUnconsumed) {
-                consumed[1] = dy - (int) mTotalUnconsumed;
-                mTotalUnconsumed = 0;
-            } else {
-                mTotalUnconsumed -= dy;
+        LogWrapper.d("onNestedPreScroll, dx = %s, dy = %s", dx, dy);
+        // If we are in the middle of consuming, a scroll, then we want to move the spinner back up before allowing the list to scroll
+
+        final int targetTop = getTargetView().getTop();
+        if (dy > 0 && targetTop > 0) { // up
+            if (targetTop - dy >= 0) {
+                moveSpinner(-dy);
                 consumed[1] = dy;
+            } else {
+                consumed[1] = -targetTop;
+                moveSpinner(-targetTop);
             }
-            moveSpinner(mTotalUnconsumed);
         }
 
         // Now let our nested parent consume the leftovers
@@ -456,25 +469,6 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
             consumed[0] += parentConsumed[0];
             consumed[1] += parentConsumed[1];
         }
-    }
-
-    @Override
-    public int getNestedScrollAxes() {
-        return mNestedScrollingParentHelper.getNestedScrollAxes();
-    }
-
-    @Override
-    public void onStopNestedScroll(@NonNull View target) {
-        mNestedScrollingParentHelper.onStopNestedScroll(target);
-        mNestedScrollInProgress = false;
-        // Finish the spinner for nested scrolling if we ever consumed any
-        // unconsumed nested scroll
-        if (mTotalUnconsumed > 0) {
-            finishSpinner(mTotalUnconsumed);
-            mTotalUnconsumed = 0;
-        }
-        // Dispatch up our nested parent
-        stopNestedScroll();
     }
 
     @Override
@@ -492,10 +486,37 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
         // 'offset in window 'functionality to see if we have been moved from the event.
         // This is a decent indication of whether we should take over the event stream or not.
         final int dy = dyUnconsumed + mParentOffsetInWindow[1];
+
+        LogWrapper.d("onNestedScroll, dyConsumed = %s, dyUnconsumed = %s, dy = %s, canChildScrollUp = %s",
+                     dyConsumed,
+                     dyUnconsumed,
+                     dy,
+                     canChildScrollUp());
+
         if (dy < 0 && !canChildScrollUp()) {
-            mTotalUnconsumed += Math.abs(dy);
-            moveSpinner(mTotalUnconsumed);
+            moveSpinner(Math.abs(dy));
         }
+    }
+
+    @Override
+    public int getNestedScrollAxes() {
+        return mNestedScrollingParentHelper.getNestedScrollAxes();
+    }
+
+    @Override
+    public void onStopNestedScroll(@NonNull View target) {
+        mNestedScrollingParentHelper.onStopNestedScroll(target);
+        mNestedScrollInProgress = false;
+        // Finish the spinner for nested scrolling if we ever consumed any
+        // unconsumed nested scroll
+
+        if (getTargetView().getTop() > 0) {
+            finishSpinner();
+        }
+
+        // Dispatch up our nested parent
+        stopNestedScroll();
+        LogWrapper.d("onStopNestedScroll");
     }
 
     // NestedScrollingChild
@@ -526,10 +547,8 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
     }
 
     @Override
-    public boolean dispatchNestedScroll(int dxConsumed, int dyConsumed, int dxUnconsumed,
-                                        int dyUnconsumed, int[] offsetInWindow) {
-        return mNestedScrollingChildHelper.dispatchNestedScroll(dxConsumed, dyConsumed,
-                                                                dxUnconsumed, dyUnconsumed, offsetInWindow);
+    public boolean dispatchNestedScroll(int dxConsumed, int dyConsumed, int dxUnconsumed, int dyUnconsumed, int[] offsetInWindow) {
+        return mNestedScrollingChildHelper.dispatchNestedScroll(dxConsumed, dyConsumed, dxUnconsumed, dyUnconsumed, offsetInWindow);
     }
 
     @Override
@@ -561,108 +580,55 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
         return animation != null && animation.hasStarted() && !animation.hasEnded();
     }
 
-    private void moveSpinner(float overscrollTop) {
-        LogWrapper.d("moveSpinner, overscrollTop = %s,mTotalDragDistance = %s", overscrollTop, mTotalDragDistance);
-        overscrollTop = overscrollTop * 0.4f;
-        setTargetTopDistance((int) overscrollTop);
+    private void startDragging(float y) {
+        if (mInitialDownY < 0) {
+            mInitialDownY = y - mTouchSlop - 1; // 如果事件被中断，则假装偏移
+        }
+
+        final float yDiff = y - mInitialDownY;
+        if (Math.abs(yDiff) > mTouchSlop && !mIsBeingDragged) {
+            if (yDiff > 0) {
+                mInitialMotionY = mInitialDownY + mTouchSlop;
+            } else if (yDiff < 0) {
+                mInitialMotionY = mInitialDownY - mTouchSlop;
+            }
+            mLastMotionY = mInitialMotionY;
+            mIsBeingDragged = true;
+            LogWrapper.d("startDragging, y = %s, yDiff = %s", y, yDiff);
+        }
     }
 
-    private void finishSpinner(float overscrollTop) {
-        LogWrapper.d("finishSpinner, overscrollTop = %s,mTotalDragDistance = %s", overscrollTop, mTotalDragDistance);
+    private boolean moveSpinner(int offset) {
+        if (offset > 0) {
+            setTargetTopAndBottomOffset((int) (offset * 0.6f));
+            return true;
+        } else if (offset < 0) {
+            final View target = getTargetView();
+            if (target.getTop() <= 0) {
+                return false;
+            } else {
+                final float expected = target.getTop() + offset;
+                if (expected >= 0) {
+                    setTargetTopAndBottomOffset(offset);
+                } else {
+                    setTargetTopAndBottomOffset(-target.getTop());
+                }
+                return true;
+            }
+        }
+        return false;
+    }
 
-        if (overscrollTop > mTotalDragDistance) {
+    private void finishSpinner() {
+        LogWrapper.d("finishSpinner,top = %s, mTotalDragDistance = %s", getTargetView().getTop(), mTotalDragDistance);
+
+        if (getTargetView().getTop() > mTotalDragDistance) {
             setRefreshing(true, true);
         } else {
             // cancel refresh
             mRefreshing = false;
             animateOffsetToStartPosition();
         }
-    }
-
-    @SuppressLint("ClickableViewAccessibility")
-    @Override
-    public boolean onTouchEvent(MotionEvent ev) {
-        final int action = ev.getActionMasked();
-        int pointerIndex;
-        LogWrapper.d("onTouchEvent , MotionEvent = %s", MotionEvent.actionToString(ev.getAction()));
-        if (!isEnabled() || canChildScrollUp() || mRefreshing || mNestedScrollInProgress) {
-            // Fail fast if we're not in a state where a swipe is possible
-            return false;
-        }
-
-        switch (action) {
-            case MotionEvent.ACTION_DOWN:
-                mActivePointerId = ev.getPointerId(0);
-                mIsBeingDragged = false;
-                break;
-
-            case MotionEvent.ACTION_MOVE: {
-                pointerIndex = ev.findPointerIndex(mActivePointerId);
-                if (pointerIndex < 0) {
-                    Log.e(LOG_TAG, "Got ACTION_MOVE event but have an invalid active pointer id.");
-                    return false;
-                }
-
-                final float y = ev.getY(pointerIndex);
-                startDragging(y);
-
-                if (mIsBeingDragged) {
-                    final float overscrollTop = (y - mInitialMotionY) * DRAG_RATE;
-                    if (overscrollTop > 0) {
-                        moveSpinner(overscrollTop);
-                    } else {
-                        return false;
-                    }
-                }
-                break;
-            }
-            case MotionEvent.ACTION_POINTER_DOWN: {
-                pointerIndex = ev.getActionIndex();
-                if (pointerIndex < 0) {
-                    Log.e(LOG_TAG,
-                          "Got ACTION_POINTER_DOWN event but have an invalid action index.");
-                    return false;
-                }
-                mActivePointerId = ev.getPointerId(pointerIndex);
-                break;
-            }
-
-            case MotionEvent.ACTION_POINTER_UP:
-                onSecondaryPointerUp(ev);
-                break;
-
-            case MotionEvent.ACTION_UP: {
-                pointerIndex = ev.findPointerIndex(mActivePointerId);
-                if (pointerIndex < 0) {
-                    Log.e(LOG_TAG, "Got ACTION_UP event but don't have an active pointer id.");
-                    return false;
-                }
-
-                if (mIsBeingDragged) {
-                    final float y = ev.getY(pointerIndex);
-                    final float overscrollTop = (y - mInitialMotionY) * DRAG_RATE;
-                    mIsBeingDragged = false;
-                    finishSpinner(overscrollTop);
-                }
-                mActivePointerId = INVALID_POINTER;
-                return false;
-            }
-            case MotionEvent.ACTION_CANCEL:
-                return false;
-            default:
-                return true;
-        }
-
-        return true;
-    }
-
-    private void startDragging(float y) {
-        final float yDiff = y - mInitialDownY;
-        if (yDiff > mTouchSlop && !mIsBeingDragged) {
-            mInitialMotionY = mInitialDownY + mTouchSlop;
-            mIsBeingDragged = true;
-        }
-        LogWrapper.d("startDragging, y = %s, yDiff = %s", y, yDiff);
     }
 
     private void animateOffsetToCorrectPosition() {
@@ -687,7 +653,8 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
             @Override
             public void onAnimationUpdate(final ValueAnimator animation) {
                 final int current = (int) animation.getAnimatedValue();
-                setTargetTopDistance(current);
+                final int offset = current - getTargetView().getTop();
+                setTargetTopAndBottomOffset(offset);
             }
         });
 
@@ -717,7 +684,8 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
             @Override
             public void onAnimationUpdate(final ValueAnimator animation) {
                 final int current = (int) animation.getAnimatedValue();
-                setTargetTopDistance(current);
+                final int offset = current - getTargetView().getTop();
+                setTargetTopAndBottomOffset(offset);
             }
         });
 
@@ -725,14 +693,13 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
         mToStartPositionAnimator = valueAnimator;
     }
 
-    void setTargetTopDistance(int targetDistance) {
-        LogWrapper.d("setTargetTopDistance , distance = %s", targetDistance);
+    void setTargetTopAndBottomOffset(int offset) {
         final View target = getTargetView();
         if (target != null) {
-            final int offset = targetDistance - target.getTop();
+            LogWrapper.d("setTargetTopAndBottomOffset , offset = %s, top = %s", offset, target.getTop());
             ViewCompat.offsetTopAndBottom(target, offset);
         } else {
-            LogWrapper.d("setTargetTopDistance ,mTarget is null, distance = %s", targetDistance);
+            LogWrapper.d("setTargetTopDistance ,mTarget is null, offset = %s", offset);
         }
     }
 

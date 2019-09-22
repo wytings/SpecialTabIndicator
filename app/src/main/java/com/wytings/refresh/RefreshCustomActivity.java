@@ -26,14 +26,21 @@ public class RefreshCustomActivity extends AppCompatActivity {
         recyclerView.setAdapter(new MyAdapter(this, 30));
 
         final SuperSwipeRefreshLayout swipeRefreshLayout = findViewById(R.id.behavior_content_layout);
-        swipeRefreshLayout.setRefreshing(true);
 
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
+                swipeRefreshLayout.setRefreshing(true);
+            }
+        }, 1000);
+
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                LogWrapper.d("RefreshCustomActivity , cancel onRefresh ,top = %s", recyclerView.getTop());
                 swipeRefreshLayout.setRefreshing(false);
             }
-        }, 5000);
+        }, 10000);
 
         swipeRefreshLayout.setOnRefreshListener(new SuperSwipeRefreshLayout.OnRefreshListener() {
             @Override
@@ -42,9 +49,10 @@ public class RefreshCustomActivity extends AppCompatActivity {
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
+                        LogWrapper.d("RefreshCustomActivity , cancel onRefresh ,top = %s", recyclerView.getTop());
                         swipeRefreshLayout.setRefreshing(false);
                     }
-                }, 1000);
+                }, 5000);
             }
         });
 
