@@ -19,7 +19,8 @@
         <activity android:name="com.wytings.scroll.AppBarActivity" />
         <activity android:name="com.wytings.scroll.ScrollActivity" />
         <activity android:name="com.wytings.special.SpecialActivity" />
-        <activity android:name="com.wytings.refresh.RefreshActivity" />
+        <activity android:name="com.wytings.refresh.RefreshCustomActivity" />
+        <activity android:name="com.wytings.refresh.RefreshDefaultActivity" />
 
     </application>
 

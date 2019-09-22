@@ -11,7 +11,7 @@ import java.util.Locale;
 
 public final class LogWrapper {
 
-    private static final String TAG = "wytings";
+    private static final String TAG = "LogWrapper";
 
     public static void d(String msg, Object... args) {
         Log.d(TAG, "--> " + String.format(Locale.CHINA, msg, args));

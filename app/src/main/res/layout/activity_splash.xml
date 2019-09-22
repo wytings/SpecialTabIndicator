@@ -3,6 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:layout_margin="10dp"
     android:gravity="center"
     android:orientation="vertical">
 
@@ -28,11 +29,30 @@
         android:text="AppBar"
         android:textAllCaps="false" />
 
-    <Button
-        android:id="@+id/refresh"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Refresh"
-        android:textAllCaps="false" />
+        android:gravity="center"
+        android:orientation="horizontal">
+
+
+        <Button
+            android:id="@+id/refresh_custom"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Custom Refresh"
+            android:textAllCaps="false" />
+
+        <Button
+            android:id="@+id/refresh_default"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Default Refresh"
+            android:textAllCaps="false" />
+
+    </LinearLayout>
+
 
 </LinearLayout>

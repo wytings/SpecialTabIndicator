@@ -1,6 +1,7 @@
 package com.wytings.adapter;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
@@ -31,6 +32,12 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyHolder> {
     }
 
     @Override
+    public void onAttachedToRecyclerView(@NonNull final RecyclerView recyclerView) {
+        super.onAttachedToRecyclerView(recyclerView);
+        // recyclerView.addItemDecoration(new DividerItemDecoration(recyclerView.getContext(), DividerItemDecoration.VERTICAL));
+    }
+
+    @Override
     @NonNull
     public MyHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         return new MyHolder(LayoutInflater.from(parent.getContext()).inflate(android.R.layout.simple_list_item_1, parent, false));
@@ -39,6 +46,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyHolder> {
     @Override
     public void onBindViewHolder(@NonNull MyHolder holder, int position) {
         holder.titleText.setText(modelList.get(position));
+        holder.itemView.setBackgroundColor(position % 2 == 0 ? Color.LTGRAY : Color.WHITE);
         //LogWrapper.d("MyAdapter - onBindViewHolder " + holder.titleText.getText());
     }
 

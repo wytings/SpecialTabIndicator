@@ -6,7 +6,8 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 
-import com.wytings.refresh.RefreshActivity;
+import com.wytings.refresh.RefreshCustomActivity;
+import com.wytings.refresh.RefreshDefaultActivity;
 import com.wytings.scroll.AppBarActivity;
 import com.wytings.scroll.ScrollActivity;
 import com.wytings.special.SpecialActivity;
@@ -40,10 +41,16 @@ public class SplashActivity extends AppCompatActivity {
                 startActivity(new Intent(v.getContext(), AppBarActivity.class));
             }
         });
-        findViewById(R.id.refresh).setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.refresh_custom).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(final View v) {
-                startActivity(new Intent(v.getContext(), RefreshActivity.class));
+                startActivity(new Intent(v.getContext(), RefreshCustomActivity.class));
+            }
+        });
+        findViewById(R.id.refresh_default).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(final View v) {
+                startActivity(new Intent(v.getContext(), RefreshDefaultActivity.class));
             }
         });
 
