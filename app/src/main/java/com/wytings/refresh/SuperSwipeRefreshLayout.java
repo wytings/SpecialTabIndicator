@@ -88,11 +88,7 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
     private float mInitialDownY;
     private boolean mIsBeingDragged;
     private int mActivePointerId = INVALID_POINTER;
-    /**
-     * Target is returning to its start offset because it was cancelled or a
-     * refresh was triggered.
-     */
-    private boolean mReturningToStart;
+
     private final DecelerateInterpolator mDecelerateInterpolator;
     private static final int[] LAYOUT_ATTRS = new int[]{
             android.R.attr.enabled
@@ -350,17 +346,16 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-
+        LogWrapper.d("onInterceptTouchEvent , MotionEvent = %s", MotionEvent.actionToString(ev.getAction()));
         final int action = ev.getActionMasked();
         int pointerIndex;
 
-        if (mReturningToStart && action == MotionEvent.ACTION_DOWN) {
-            mReturningToStart = false;
-        }
-
-        if (!isEnabled() || mReturningToStart || canChildScrollUp()
-                || mRefreshing || mNestedScrollInProgress) {
+        if (!isEnabled() || canChildScrollUp() || mRefreshing || mNestedScrollInProgress) {
             // Fail fast if we're not in a state where a swipe is possible
+            LogWrapper.d("onInterceptTouchEvent , canChildScrollUp = %s,mRefreshing = %s, mNestedScrollInProgress = %s ",
+                         canChildScrollUp(),
+                         mRefreshing,
+                         mNestedScrollInProgress);
             return false;
         }
 
@@ -427,8 +422,7 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
      */
     @Override
     public boolean onStartNestedScroll(@NonNull View child, @NonNull View target, int nestedScrollAxes) {
-        return isEnabled() && !mReturningToStart && !mRefreshing
-                && (nestedScrollAxes & ViewCompat.SCROLL_AXIS_VERTICAL) != 0;
+        return isEnabled() && !mRefreshing && (nestedScrollAxes & ViewCompat.SCROLL_AXIS_VERTICAL) != 0;
     }
 
     @Override
@@ -589,14 +583,9 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
         final int action = ev.getActionMasked();
-        int pointerIndex = -1;
-
-        if (mReturningToStart && action == MotionEvent.ACTION_DOWN) {
-            mReturningToStart = false;
-        }
-
-        if (!isEnabled() || mReturningToStart || canChildScrollUp()
-                || mRefreshing || mNestedScrollInProgress) {
+        int pointerIndex;
+        LogWrapper.d("onTouchEvent , MotionEvent = %s", MotionEvent.actionToString(ev.getAction()));
+        if (!isEnabled() || canChildScrollUp() || mRefreshing || mNestedScrollInProgress) {
             // Fail fast if we're not in a state where a swipe is possible
             return false;
         }
@@ -673,6 +662,7 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
             mInitialMotionY = mInitialDownY + mTouchSlop;
             mIsBeingDragged = true;
         }
+        LogWrapper.d("startDragging, y = %s, yDiff = %s", y, yDiff);
     }
 
     private void animateOffsetToCorrectPosition() {
