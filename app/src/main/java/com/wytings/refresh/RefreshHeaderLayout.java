@@ -87,6 +87,8 @@ public class RefreshHeaderLayout extends FrameLayout {
             public void onAnimationUpdate(final ValueAnimator animation) {
                 final int current = (int) animation.getAnimatedValue();
                 lottieAnimationView.setFrame(current);
+                LogWrapper.d("lottieAnimationView - dispatchRefreshing alpha = %s", lottieAnimationView.getAlpha());
+
             }
         });
         valueAnimator.setInterpolator(new LinearInterpolator());
