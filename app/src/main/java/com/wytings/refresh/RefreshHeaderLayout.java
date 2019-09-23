@@ -8,6 +8,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
+import android.view.animation.LinearInterpolator;
 import android.widget.FrameLayout;
 
 import com.airbnb.lottie.LottieAnimationView;
@@ -24,6 +25,8 @@ public class RefreshHeaderLayout extends FrameLayout {
     private final LottieAnimationView lottieAnimationView;
     private ValueAnimator mRepeatProgressAnimator;
     private ValueAnimator mFinishAnimator;
+
+    private static final int LOADING_FRAME = 30;
 
     public RefreshHeaderLayout(@NonNull Context context) {
         this(context, null);
@@ -58,7 +61,7 @@ public class RefreshHeaderLayout extends FrameLayout {
             return;
         }
 
-        lottieAnimationView.setFrame(frame > 30 ? 30 : frame);
+        lottieAnimationView.setFrame(frame > LOADING_FRAME ? LOADING_FRAME : frame);
         lottieAnimationView.setAlpha(visiblePercent);
         LogWrapper.d("lottieAnimationView - frame = %s ", lottieAnimationView.getFrame());
 
@@ -77,7 +80,8 @@ public class RefreshHeaderLayout extends FrameLayout {
             mRepeatProgressAnimator.cancel();
         }
 
-        final ValueAnimator valueAnimator = ValueAnimator.ofInt(0, 30);
+        lottieAnimationView.setAlpha(1.0f);
+        final ValueAnimator valueAnimator = ValueAnimator.ofInt(0, LOADING_FRAME);
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(final ValueAnimator animation) {
@@ -85,10 +89,10 @@ public class RefreshHeaderLayout extends FrameLayout {
                 lottieAnimationView.setFrame(current);
             }
         });
-
+        valueAnimator.setInterpolator(new LinearInterpolator());
         valueAnimator.setRepeatCount(ValueAnimator.INFINITE);
         valueAnimator.setRepeatMode(ValueAnimator.RESTART);
-        valueAnimator.setDuration(1000);
+        valueAnimator.setDuration(750);
         valueAnimator.start();
         mRepeatProgressAnimator = valueAnimator;
     }
@@ -111,6 +115,7 @@ public class RefreshHeaderLayout extends FrameLayout {
                 lottieAnimationView.setFrame(current);
             }
         });
+        valueAnimator.setInterpolator(new LinearInterpolator());
         valueAnimator.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
@@ -120,7 +125,7 @@ public class RefreshHeaderLayout extends FrameLayout {
                 }
             }
         });
-        valueAnimator.setDuration(1000);
+        valueAnimator.setDuration(750);
         valueAnimator.start();
         mFinishAnimator = valueAnimator;
     }
