@@ -284,16 +284,16 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        LogWrapper.d("onInterceptTouchEvent , MotionEvent = %s", MotionEvent.actionToString(ev.getAction()));
+        LogWrapper.d("onInterceptTouchEvent , MotionEvent = %s,mIsBeingDragged = %s", MotionEvent.actionToString(ev.getAction()), mIsBeingDragged);
         final int action = ev.getActionMasked();
         int pointerIndex;
 
         if (!isEnabled() || canChildScrollUp() || mNestedScrollInProgress) {
             // Fail fast if we're not in a state where a swipe is possible
             LogWrapper.d("onInterceptTouchEvent , canChildScrollUp = %s,mRefreshing = %s, mNestedScrollInProgress = %s ",
-                    canChildScrollUp(),
-                    mRefreshing,
-                    mNestedScrollInProgress);
+                         canChildScrollUp(),
+                         mRefreshing,
+                         mNestedScrollInProgress);
             return false;
         }
 
@@ -349,9 +349,9 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
         if (!isEnabled() || canChildScrollUp() || mNestedScrollInProgress) {
             // Fail fast if we're not in a state where a swipe is possible
             LogWrapper.d("onTouchEvent , isEnabled = %s, canChildScrollUp = %s, mNestedScrollInProgress = %s",
-                    isEnabled(),
-                    canChildScrollUp(),
-                    mNestedScrollInProgress);
+                         isEnabled(),
+                         canChildScrollUp(),
+                         mNestedScrollInProgress);
             return false;
         }
 
@@ -382,7 +382,7 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
                 pointerIndex = ev.getActionIndex();
                 if (pointerIndex < 0) {
                     Log.e(LOG_TAG,
-                            "Got ACTION_POINTER_DOWN event but have an invalid action index.");
+                          "Got ACTION_POINTER_DOWN event but have an invalid action index.");
                     return false;
                 }
                 mActivePointerId = ev.getPointerId(pointerIndex);
@@ -490,10 +490,10 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
         final int dy = dyUnconsumed + mParentOffsetInWindow[1];
 
         LogWrapper.d("onNestedScroll, dyConsumed = %s, dyUnconsumed = %s, dy = %s, canChildScrollUp = %s",
-                dyConsumed,
-                dyUnconsumed,
-                dy,
-                canChildScrollUp());
+                     dyConsumed,
+                     dyUnconsumed,
+                     dy,
+                     canChildScrollUp());
 
         if (dy < 0 && !canChildScrollUp()) {
             moveSpinner(Math.abs(dy));
@@ -507,6 +507,8 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
 
     @Override
     public void onStopNestedScroll(@NonNull View target) {
+        LogWrapper.d("onStopNestedScroll");
+
         mNestedScrollingParentHelper.onStopNestedScroll(target);
         mNestedScrollInProgress = false;
         // Finish the spinner for nested scrolling if we ever consumed any
@@ -518,7 +520,6 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
 
         // Dispatch up our nested parent
         stopNestedScroll();
-        LogWrapper.d("onStopNestedScroll");
     }
 
     // NestedScrollingChild
@@ -743,6 +744,7 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
          *
          * @param parent SwipeRefreshLayout that this callback is overriding.
          * @param child  The child view of SwipeRefreshLayout.
+         *
          * @return Whether it is possible for the child view of parent layout to scroll up.
          */
         boolean canChildScrollUp(@NonNull SuperSwipeRefreshLayout parent, @Nullable View child);

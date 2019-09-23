@@ -25,7 +25,6 @@ public class RefreshHeaderLayout extends FrameLayout {
     private ValueAnimator mRepeatProgressAnimator;
     private ValueAnimator mFinishAnimator;
 
-
     public RefreshHeaderLayout(@NonNull Context context) {
         this(context, null);
     }
@@ -39,7 +38,6 @@ public class RefreshHeaderLayout extends FrameLayout {
         inflate(context, R.layout.refresh_header_layout, this);
         lottieAnimationView = findViewById(R.id.animation_view);
 
-
     }
 
     public void dispatchTopAndBottomOffset(SuperSwipeRefreshLayout refreshLayout, int offset) {
@@ -50,18 +48,16 @@ public class RefreshHeaderLayout extends FrameLayout {
         visiblePercent = visiblePercent > 1 ? 1 : visiblePercent;
         int frame = (int) (visiblePercent * lottieAnimationView.getMaxFrame());
 
-        if (!refreshLayout.isRefreshing() && lottieAnimationView.getFrame() <= 30) {
+        if (mRepeatProgressAnimator == null || !mRepeatProgressAnimator.isRunning()) {
             lottieAnimationView.setFrame(frame > 30 ? 30 : frame);
             LogWrapper.d("lottieAnimationView - frame = %s ", lottieAnimationView.getFrame());
         }
-
 
         if (lottieAnimationView.getTag() == null) {
             lottieAnimationView.setTag(Object.class);
             LogWrapper.d("lottieAnimationView - minFrame = %s, maxFrame = %s", lottieAnimationView.getMinFrame(), lottieAnimationView.getMaxFrame());
 
         }
-
 
     }
 
@@ -92,7 +88,6 @@ public class RefreshHeaderLayout extends FrameLayout {
     }
 
     public void dispatchRefreshCancel(SuperSwipeRefreshLayout refreshLayout, Animator.AnimatorListener listener) {
-
 
         if (mRepeatProgressAnimator != null) {
             mRepeatProgressAnimator.cancel();
