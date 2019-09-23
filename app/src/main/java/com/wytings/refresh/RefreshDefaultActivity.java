@@ -24,17 +24,17 @@ public class RefreshDefaultActivity extends AppCompatActivity {
 
         final SwipeRefreshLayout swipeRefreshLayout = findViewById(R.id.behavior_content_layout);
         // swipeRefreshLayout.setProgressViewOffset(false, 100, 300);
-         swipeRefreshLayout.setProgressViewEndTarget(false, 200);
+        // swipeRefreshLayout.setProgressViewEndTarget(false, 200);
         // swipeRefreshLayout.setDistanceToTriggerSync(300);
 
        // swipeRefreshLayout.setRefreshing(true);
 
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                swipeRefreshLayout.setRefreshing(true);
-            }
-        }, 1000);
+//        new Handler().postDelayed(new Runnable() {
+//            @Override
+//            public void run() {
+//                swipeRefreshLayout.setRefreshing(true);
+//            }
+//        }, 1000);
 
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
