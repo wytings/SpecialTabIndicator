@@ -41,6 +41,7 @@ public class RefreshHeaderLayout extends FrameLayout {
     }
 
     public void dispatchTopAndBottomOffset(SuperSwipeRefreshLayout refreshLayout, int offset) {
+        printLottieInfo();
         ViewCompat.offsetTopAndBottom(this, offset);
         final int visibleHeight = getBottom();
         final int totalHeight = getMeasuredHeight();
@@ -48,21 +49,26 @@ public class RefreshHeaderLayout extends FrameLayout {
         visiblePercent = visiblePercent > 1 ? 1 : visiblePercent;
         int frame = (int) (visiblePercent * lottieAnimationView.getMaxFrame());
 
-        if (mRepeatProgressAnimator == null || !mRepeatProgressAnimator.isRunning()) {
-            lottieAnimationView.setFrame(frame > 30 ? 30 : frame);
-            LogWrapper.d("lottieAnimationView - frame = %s ", lottieAnimationView.getFrame());
+        final boolean isRepeatRunning = mRepeatProgressAnimator != null && mRepeatProgressAnimator.isRunning();
+
+        if (isRepeatRunning || refreshLayout.isAnimationRunning()) {
+            if (refreshLayout.isToStartPositionRunning()) {
+                lottieAnimationView.setAlpha(visiblePercent);
+            }
+            return;
         }
 
-        if (lottieAnimationView.getTag() == null) {
-            lottieAnimationView.setTag(Object.class);
-            LogWrapper.d("lottieAnimationView - minFrame = %s, maxFrame = %s", lottieAnimationView.getMinFrame(), lottieAnimationView.getMaxFrame());
-
-        }
+        lottieAnimationView.setFrame(frame > 30 ? 30 : frame);
+        lottieAnimationView.setAlpha(visiblePercent);
+        LogWrapper.d("lottieAnimationView - frame = %s ", lottieAnimationView.getFrame());
 
     }
 
-    public void dispatchReset(SuperSwipeRefreshLayout refreshLayout) {
-        lottieAnimationView.setFrame(0);
+    private void printLottieInfo() {
+        if (lottieAnimationView.getTag() == null) {
+            lottieAnimationView.setTag(Object.class);
+            LogWrapper.d("lottieAnimationView - minFrame = %s, maxFrame = %s", lottieAnimationView.getMinFrame(), lottieAnimationView.getMaxFrame());
+        }
     }
 
     public void dispatchRefreshing(SuperSwipeRefreshLayout refreshLayout) {

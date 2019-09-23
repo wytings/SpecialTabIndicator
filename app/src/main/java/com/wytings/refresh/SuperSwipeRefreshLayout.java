@@ -46,7 +46,7 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
 
     private static final int ANIMATE_TO_TRIGGER_DURATION = 200;
 
-    private static final int DEFAULT_TRIGGER_DISTANCE = 128;
+    private static final int DEFAULT_TRIGGER_DISTANCE = 60;
 
     /**
      * the target of the gesture
@@ -65,6 +65,10 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
     private final int[] mParentScrollConsumed = new int[2];
     private final int[] mParentOffsetInWindow = new int[2];
     private boolean mNestedScrollInProgress;
+    /**
+     * there is some bad case that mNestedScrollInProgress is true but no nestedScrolling has ever happened.
+     */
+    private boolean mIsNestedScrollReallyHappened;
 
     private float mInitialMotionY;
     private float mInitialDownY = -1;
@@ -125,7 +129,6 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
         mIsBeingDragged = false;
         mNestedScrollInProgress = false;
         mInitialDownY = -1;
-        refreshHeader.dispatchReset(this);
 
         LogWrapper.d("reset");
     }
@@ -142,6 +145,18 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         reset();
+    }
+
+    public boolean isAnimationRunning() {
+        return isToCorrectPositionRunning() || isToStartPositionRunning();
+    }
+
+    public boolean isToCorrectPositionRunning() {
+        return mToCorrectPositionAnimator != null && mToCorrectPositionAnimator.isRunning();
+    }
+
+    public boolean isToStartPositionRunning() {
+        return mToStartPositionAnimator != null && mToStartPositionAnimator.isRunning();
     }
 
     /**
@@ -436,7 +451,7 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
      */
     @Override
     public boolean onStartNestedScroll(@NonNull View child, @NonNull View target, int nestedScrollAxes) {
-
+        LogWrapper.d("onStartNestedScroll top = %s axes = %s", getTargetView().getTop(), (nestedScrollAxes & ViewCompat.SCROLL_AXIS_VERTICAL));
         return isEnabled() && (getTargetView().getTop() >= 0) && (nestedScrollAxes & ViewCompat.SCROLL_AXIS_VERTICAL) != 0;
     }
 
@@ -447,13 +462,14 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
         // Dispatch up to the nested parent
         startNestedScroll(axes & ViewCompat.SCROLL_AXIS_VERTICAL);
         mNestedScrollInProgress = true;
+        LogWrapper.d("onNestedScrollAccepted");
     }
 
     @Override
     public void onNestedPreScroll(@NonNull View target, int dx, int dy, @NonNull int[] consumed) {
         LogWrapper.d("onNestedPreScroll, dx = %s, dy = %s", dx, dy);
         // If we are in the middle of consuming, a scroll, then we want to move the spinner back up before allowing the list to scroll
-
+        mIsNestedScrollReallyHappened = true;
         final int targetTop = getTargetView().getTop();
         if (dy > 0 && targetTop > 0) { // up
             if (targetTop - dy >= 0) {
@@ -479,6 +495,7 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
                                final int dyConsumed,
                                final int dxUnconsumed,
                                final int dyUnconsumed) {
+        mIsNestedScrollReallyHappened = true;
         // Dispatch up to the nested parent first
         dispatchNestedScroll(dxConsumed, dyConsumed, dxUnconsumed, dyUnconsumed, mParentOffsetInWindow);
 
@@ -507,15 +524,21 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
 
     @Override
     public void onStopNestedScroll(@NonNull View target) {
-        LogWrapper.d("onStopNestedScroll");
+        LogWrapper.d("onStopNestedScroll - mRefreshing = %s,mIsBeingDragged = %smNestedScrollInProgress=%s",
+                     mRefreshing,
+                     mIsBeingDragged,
+                     mNestedScrollInProgress);
 
         mNestedScrollingParentHelper.onStopNestedScroll(target);
         mNestedScrollInProgress = false;
         // Finish the spinner for nested scrolling if we ever consumed any
         // unconsumed nested scroll
 
-        if (getTargetView().getTop() > 0) {
-            finishSpinner();
+        if (mIsNestedScrollReallyHappened) {
+            mIsNestedScrollReallyHappened = false;
+            if (getTargetView().getTop() > 0) {
+                finishSpinner();
+            }
         }
 
         // Dispatch up our nested parent
@@ -703,9 +726,10 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
                 }
             }
 
-            ViewCompat.offsetTopAndBottom(target, offset);
-            refreshHeader.dispatchTopAndBottomOffset(this, offset);
-
+            if (offset != 0) {
+                ViewCompat.offsetTopAndBottom(target, offset);
+                refreshHeader.dispatchTopAndBottomOffset(this, offset);
+            }
         } else {
             LogWrapper.d("setTargetTopDistance ,mTarget is null, offset = %s", offset);
         }
