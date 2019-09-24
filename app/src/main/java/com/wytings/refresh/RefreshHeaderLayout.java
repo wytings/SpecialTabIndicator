@@ -26,7 +26,8 @@ public class RefreshHeaderLayout extends FrameLayout {
     private ValueAnimator mRepeatProgressAnimator;
     private ValueAnimator mFinishAnimator;
 
-    private static final int LOADING_FRAME = 30;
+    private static final int LOADING_FRAME_START = 0;
+    private static final int LOADING_FRAME_END = 30;
 
     public RefreshHeaderLayout(@NonNull Context context) {
         this(context, null);
@@ -61,7 +62,7 @@ public class RefreshHeaderLayout extends FrameLayout {
             return;
         }
 
-        lottieAnimationView.setFrame(frame > LOADING_FRAME ? LOADING_FRAME : frame);
+        lottieAnimationView.setFrame(frame > LOADING_FRAME_END ? LOADING_FRAME_END : frame);
         lottieAnimationView.setAlpha(visiblePercent);
         LogWrapper.d("lottieAnimationView - frame = %s ", lottieAnimationView.getFrame());
 
@@ -81,7 +82,7 @@ public class RefreshHeaderLayout extends FrameLayout {
         }
 
         lottieAnimationView.setAlpha(1.0f);
-        final ValueAnimator valueAnimator = ValueAnimator.ofInt(0, LOADING_FRAME);
+        final ValueAnimator valueAnimator = ValueAnimator.ofInt(LOADING_FRAME_START, LOADING_FRAME_END);
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(final ValueAnimator animation) {

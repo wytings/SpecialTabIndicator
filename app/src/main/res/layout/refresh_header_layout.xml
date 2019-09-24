@@ -13,7 +13,7 @@
         android:layout_height="50dp"
         android:layout_gravity="center"
         app:lottie_autoPlay="false"
-        app:lottie_fileName="loading.json"
+        app:lottie_fileName="loading_v3.json"
         app:lottie_loop="false" />
 
 </merge>
