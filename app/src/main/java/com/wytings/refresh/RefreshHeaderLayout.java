@@ -27,7 +27,7 @@ public class RefreshHeaderLayout extends FrameLayout {
     private ValueAnimator mFinishAnimator;
 
     private static final int LOADING_FRAME_START = 0;
-    private static final int LOADING_FRAME_END = 30;
+    private static final int LOADING_FRAME_END = 24;
 
     public RefreshHeaderLayout(@NonNull Context context) {
         this(context, null);
