@@ -28,6 +28,8 @@ public class RefreshHeaderLayout extends FrameLayout {
 
     private static final int LOADING_FRAME_START = 0;
     private static final int LOADING_FRAME_END = 24;
+    private static final int ONE_FRAME_TIME = 141;
+    private static final float PERCENT_START = 0.5f;
 
     public RefreshHeaderLayout(@NonNull Context context) {
         this(context, null);
@@ -49,22 +51,27 @@ public class RefreshHeaderLayout extends FrameLayout {
         ViewCompat.offsetTopAndBottom(this, offset);
         final int visibleHeight = getBottom();
         final int totalHeight = getMeasuredHeight();
-        float visiblePercent = 1.0f * visibleHeight / totalHeight;
-        visiblePercent = visiblePercent > 1 ? 1 : visiblePercent;
-        int frame = (int) (visiblePercent * lottieAnimationView.getMaxFrame());
+        final float percent = 1.0f * visibleHeight / totalHeight;
+
+        final float fixedPercent = percent < PERCENT_START ? 0 : percent - PERCENT_START;
+        int frame = (int) (fixedPercent * lottieAnimationView.getMaxFrame());
 
         final boolean isRepeatRunning = mRepeatProgressAnimator != null && mRepeatProgressAnimator.isRunning();
+        LogWrapper.d("lottieAnimationView - dispatchTopAndBottomOffset - visibleHeight = %s,frame = %s ",
+                     visibleHeight,
+                     lottieAnimationView.getFrame());
 
         if (isRepeatRunning || refreshLayout.isAnimationRunning()) {
             if (refreshLayout.isToStartPositionRunning()) {
-                lottieAnimationView.setAlpha(visiblePercent);
+                setLottieViewScale(percent);
             }
             return;
         }
 
         lottieAnimationView.setFrame(frame > LOADING_FRAME_END ? LOADING_FRAME_END : frame);
-        lottieAnimationView.setAlpha(visiblePercent);
-        LogWrapper.d("lottieAnimationView - frame = %s ", lottieAnimationView.getFrame());
+        setLottieViewScale(1.0f * lottieAnimationView.getFrame() / LOADING_FRAME_END);
+
+        LogWrapper.d("lottieAnimationView - frame = %s scale = %s", lottieAnimationView.getFrame(), lottieAnimationView.getScaleX());
 
     }
 
@@ -81,21 +88,20 @@ public class RefreshHeaderLayout extends FrameLayout {
             mRepeatProgressAnimator.cancel();
         }
 
-        lottieAnimationView.setAlpha(1.0f);
+        setLottieViewScale(1.0f);
         final ValueAnimator valueAnimator = ValueAnimator.ofInt(LOADING_FRAME_START, LOADING_FRAME_END);
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(final ValueAnimator animation) {
                 final int current = (int) animation.getAnimatedValue();
                 lottieAnimationView.setFrame(current);
-                LogWrapper.d("lottieAnimationView - dispatchRefreshing alpha = %s", lottieAnimationView.getAlpha());
-
+                LogWrapper.d("lottieAnimationView - dispatchRefreshing scale = %s", lottieAnimationView.getScaleX());
             }
         });
         valueAnimator.setInterpolator(new LinearInterpolator());
         valueAnimator.setRepeatCount(ValueAnimator.INFINITE);
         valueAnimator.setRepeatMode(ValueAnimator.RESTART);
-        valueAnimator.setDuration(750);
+        valueAnimator.setDuration(ONE_FRAME_TIME * LOADING_FRAME_END);
         valueAnimator.start();
         mRepeatProgressAnimator = valueAnimator;
     }
@@ -110,7 +116,9 @@ public class RefreshHeaderLayout extends FrameLayout {
             mFinishAnimator.cancel();
         }
 
-        final ValueAnimator valueAnimator = ValueAnimator.ofInt(lottieAnimationView.getFrame(), (int) lottieAnimationView.getMaxFrame());
+        final int currentFrame = lottieAnimationView.getFrame();
+        final int maxFrame = (int) lottieAnimationView.getMaxFrame();
+        final ValueAnimator valueAnimator = ValueAnimator.ofInt(currentFrame, maxFrame);
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(final ValueAnimator animation) {
@@ -128,8 +136,14 @@ public class RefreshHeaderLayout extends FrameLayout {
                 }
             }
         });
-        valueAnimator.setDuration(750);
+        valueAnimator.setDuration(ONE_FRAME_TIME * (maxFrame - currentFrame));
         valueAnimator.start();
         mFinishAnimator = valueAnimator;
     }
+
+    private void setLottieViewScale(float scale) {
+        lottieAnimationView.setScaleX(scale);
+        lottieAnimationView.setScaleY(scale);
+    }
+
 }

@@ -75,6 +75,10 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
     private float mLastMotionY;
     private boolean mIsBeingDragged;
     private int mActivePointerId = INVALID_POINTER;
+    /**
+     * for the case that {@link #onLayout(boolean, int, int, int, int)} is called when animation is running.
+     */
+    private int totalOffset = 0;
 
     private final DecelerateInterpolator mDecelerateInterpolator;
     private static final int[] LAYOUT_ATTRS = new int[]{
@@ -129,6 +133,7 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
         mIsBeingDragged = false;
         mNestedScrollInProgress = false;
         mInitialDownY = -1;
+        totalOffset = 0;
 
         LogWrapper.d("reset");
     }
@@ -244,13 +249,13 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
 
         final View target = getTargetView();
         final int targetLeft = getPaddingLeft();
-        final int targetTop = getPaddingTop();
+        final int targetTop = getPaddingTop() + totalOffset;
         final int targetWidth = width - getPaddingLeft() - getPaddingRight();
         final int targetHeight = height - getPaddingTop() - getPaddingBottom();
         target.layout(targetLeft, targetTop, targetLeft + targetWidth, targetTop + targetHeight);
 
         refreshHeader.layout(targetLeft, targetTop - refreshHeader.getMeasuredHeight(), targetLeft + targetWidth, targetTop);
-
+        LogWrapper.d("onLayout changed = %s,top = %s", changed, top);
     }
 
     @Override
@@ -729,6 +734,7 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
             if (offset != 0) {
                 ViewCompat.offsetTopAndBottom(target, offset);
                 refreshHeader.dispatchTopAndBottomOffset(this, offset);
+                totalOffset += offset;
             }
         } else {
             LogWrapper.d("setTargetTopDistance ,mTarget is null, offset = %s", offset);
