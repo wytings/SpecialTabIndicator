@@ -44,7 +44,7 @@ public class SuperSwipeRefreshLayout extends ViewGroup implements NestedScrollin
     private static final float DECELERATE_INTERPOLATION_FACTOR = 2f;
     private static final int INVALID_POINTER = -1;
 
-    private static final int ANIMATE_TO_TRIGGER_DURATION = 200;
+    private static final int ANIMATE_TO_TRIGGER_DURATION = 300;
 
     private static final int DEFAULT_TRIGGER_DISTANCE = 60;
 

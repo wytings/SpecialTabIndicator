@@ -28,7 +28,7 @@ public class RefreshHeaderLayout extends FrameLayout {
 
     private static final int LOADING_FRAME_START = 0;
     private static final int LOADING_FRAME_END = 24;
-    private static final int ONE_FRAME_TIME = 141;
+    private static final int ONE_FRAME_TIME = 41;
     private static final float PERCENT_START = 0.5f;
 
     public RefreshHeaderLayout(@NonNull Context context) {
@@ -57,9 +57,9 @@ public class RefreshHeaderLayout extends FrameLayout {
         int frame = (int) (fixedPercent * lottieAnimationView.getMaxFrame());
 
         final boolean isRepeatRunning = mRepeatProgressAnimator != null && mRepeatProgressAnimator.isRunning();
-        LogWrapper.d("lottieAnimationView - dispatchTopAndBottomOffset - visibleHeight = %s,frame = %s ",
+        LogWrapper.d("lottieAnimationView - dispatchTopAndBottomOffset - visibleHeight = %s,frame = %s,percent = %s ",
                      visibleHeight,
-                     lottieAnimationView.getFrame());
+                     lottieAnimationView.getFrame(), percent);
 
         if (isRepeatRunning || refreshLayout.isAnimationRunning()) {
             if (refreshLayout.isToStartPositionRunning()) {
